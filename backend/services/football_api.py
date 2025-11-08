@@ -87,7 +87,7 @@ async def fetch_schedule(session: aiohttp.ClientSession, year: int, week: int) -
                     game_date = game_datetime_et.date()
 
                     games.append({
-                        "event_id": event_id,
+                        "game_id": event_id,
                         "date": game_date,
                         "week": week,
                         "year": year,
@@ -195,7 +195,7 @@ async def get_team_cumulative_stats(session: aiohttp.ClientSession, team_id: int
     games_with_stats = 0
 
     for game in all_previous_games:
-        game_stats = await fetch_team_game_stats(session, game["event_id"], team_id)
+        game_stats = await fetch_team_game_stats(session, game["game_id"], team_id)
 
         if game_stats:
             games_with_stats += 1
@@ -218,7 +218,7 @@ async def get_team_cumulative_stats(session: aiohttp.ClientSession, team_id: int
 async def fetch_game_stats(session: aiohttp.ClientSession, game_info: Dict, fetch_market: bool = True) -> Dict:
     """Fetch all stats for a single game including cumulative team stats and Polymarket data."""
 
-    event_id = game_info["event_id"]
+    event_id = game_info["game_id"]
     game_date = game_info["date"]
     away_id = game_info["away_id"]
     home_id = game_info["home_id"]
@@ -243,7 +243,7 @@ async def fetch_game_stats(session: aiohttp.ClientSession, game_info: Dict, fetc
 
         # Build row
         row = {
-            "event_id": event_id,
+            "game_id": event_id,
             "date": game_date,
             "week": week,
             "year": year,
@@ -306,7 +306,7 @@ async def fetch_all_game_stats(session: aiohttp.ClientSession, games: List[Dict]
         if isinstance(result, dict) and result:
             rows.append(result)
         elif isinstance(result, Exception):
-            print(f"Error fetching game {games[i]['event_id']}: {result}")
+            print(f"Error fetching game {games[i]['game_id']}: {result}")
 
     return rows
 

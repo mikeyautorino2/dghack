@@ -305,15 +305,17 @@ async def get_matchups_cumulative_stats_between(
                             row_data[f"AWAY_{key}"] = value
                         # opening prices + timestamps (new columns)
                         if opening is not None:
-                            row_data["away_team_price"] = opening["away_price"]
-                            row_data["home_team_price"] = opening["home_price"]
-                            row_data["start_ts"] = opening["start_ts"]
-                            row_data["market_open_ts"] = opening["market_open_ts"]
+                            row_data["polymarket_away_price"] = opening["away_price"]
+                            row_data["polymarket_home_price"] = opening["home_price"]
+                            row_data["polymarket_start_ts"] = opening["start_ts"]
+                            row_data["polymarket_market_open_ts"] = opening["market_open_ts"]
+                            row_data["polymarket_market_close_ts"] = opening.get("market_close_ts")
                         else:
-                            row_data["away_team_price"] = None
-                            row_data["home_team_price"] = None
-                            row_data["start_ts"] = None
-                            row_data["market_open_ts"] = None
+                            row_data["polymarket_away_price"] = None
+                            row_data["polymarket_home_price"] = None
+                            row_data["polymarket_start_ts"] = None
+                            row_data["polymarket_market_open_ts"] = None
+                            row_data["polymarket_market_close_ts"] = None
                         return row_data
                 tasks.append(asyncio.create_task(_collect_game()))
 

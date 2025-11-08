@@ -134,3 +134,138 @@ async def get_opening_price(
 
         # Should not reach here, but return empty dict as fallback
         return {}
+
+
+async def get_current_price(
+    session: aiohttp.ClientSession,
+    sport: str,
+    date: dt.date,
+    away_team: str,
+    home_team: str
+):
+    """
+    Get current price for a Polymarket game market.
+    Returns dict with away_price, home_price, market_id, timestamp or empty dict on error.
+
+    Note: Polymarket sometimes reverses team order in slugs. This function tries both orders.
+    """
+    async with _polymarket_semaphore:
+        # Try normal order first (away-home), then reversed (home-away)
+        team_orders = [
+            (away_team, home_team, False),  # Normal order
+            (home_team, away_team, True)     # Reversed order
+        ]
+
+        for first_team, second_team, is_reversed in team_orders:
+            try:
+                slug = f"{sport.lower()}-{first_team.lower()}-{second_team.lower()}-{date.strftime('%Y-%m-%d')}"
+                market_url = f"https://gamma-api.polymarket.com/markets/slug/{slug}"
+                price_url = "https://clob.polymarket.com/prices-history"
+
+                # Get market metadata using rate-limited request
+                data = await _rate_limited_get(session, market_url)
+
+                clobIdTokens = json.loads(data["clobTokenIds"])
+                market_id = data.get("id", slug)  # Use market ID if available, otherwise slug
+
+                # Get current price (most recent snapshot)
+                now_ts = int(datetime.now().timestamp())
+                start_ts = now_ts - 120  # Look back 2 minutes for latest price
+
+                queryString = {
+                    "market": clobIdTokens[0],
+                    "startTs": start_ts,
+                    "endTs": now_ts
+                }
+
+                # Get price history using rate-limited request
+                info = await _rate_limited_get(session, price_url, params=queryString)
+
+                if not info.get("history"):
+                    # No price data available, return empty dict
+                    return {}
+
+                # Get most recent price
+                price_first = info["history"][-1]["p"]  # Last price in history
+                price_second = 1.0 - price_first
+
+                # If reversed, swap the prices back to match away/home order
+                if is_reversed:
+                    away_price = price_second
+                    home_price = price_first
+                else:
+                    away_price = price_first
+                    home_price = price_second
+
+                return {
+                    "market_id": market_id,
+                    "away_price": away_price,
+                    "home_price": home_price,
+                    "timestamp": now_ts
+                }
+            except Exception:
+                # If this order failed and we haven't tried reversed yet, continue to next iteration
+                if not is_reversed:
+                    continue
+                # If both orders failed, return empty dict
+                return {}
+
+        # Should not reach here, but return empty dict as fallback
+        return {}
+
+
+async def check_market_exists(
+    session: aiohttp.ClientSession,
+    sport: str,
+    date: dt.date,
+    away_team: str,
+    home_team: str
+) -> dict:
+    """
+    Check if a Polymarket market exists for a given game.
+
+    Returns dict with:
+        - exists (bool): True if market exists
+        - market_id (str): Polymarket market ID if exists
+        - polymarket_slug (str): URL slug if exists
+        - game_start_ts (datetime): Game start time if exists
+        - market_open_ts (datetime): Market open time if exists
+        - market_close_ts (datetime): Market close time if exists
+
+    Or returns dict with exists=False if market doesn't exist.
+    """
+    async with _polymarket_semaphore:
+        # Try normal order first (away-home), then reversed (home-away)
+        team_orders = [
+            (away_team, home_team),  # Normal order
+            (home_team, away_team)   # Reversed order
+        ]
+
+        for first_team, second_team in team_orders:
+            try:
+                slug = f"{sport.lower()}-{first_team.lower()}-{second_team.lower()}-{date.strftime('%Y-%m-%d')}"
+                market_url = f"https://gamma-api.polymarket.com/markets/slug/{slug}"
+
+                # Get market metadata using rate-limited request
+                data = await _rate_limited_get(session, market_url)
+
+                # If we got here, market exists
+                market_id = data.get("id", slug)
+                start_date = datetime.fromisoformat(data["gameStartTime"].replace("Z", "+00:00"))
+                market_open = datetime.fromisoformat(data["startDate"].replace("Z", "+00:00"))
+                market_close = datetime.fromisoformat(data["endDate"].replace("Z", "+00:00"))
+
+                return {
+                    "exists": True,
+                    "market_id": market_id,
+                    "polymarket_slug": slug,
+                    "game_start_ts": start_date,
+                    "market_open_ts": market_open,
+                    "market_close_ts": market_close
+                }
+            except Exception:
+                # If normal order failed, try reversed
+                continue
+
+        # Both orders failed, market doesn't exist
+        return {"exists": False}

@@ -1,6 +1,7 @@
 import aiohttp
 import asyncio
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import pandas as pd
 from typing import List, Dict, Optional
 from tqdm.asyncio import tqdm_asyncio
@@ -79,7 +80,11 @@ async def fetch_schedule(session: aiohttp.ClientSession, year: int, week: int) -
 
                 try:
                     game_date_str = game.get("date")
-                    game_date = datetime.fromisoformat(game_date_str.replace("Z", "+00:00")).date()
+                    # Parse as UTC datetime
+                    game_datetime_utc = datetime.fromisoformat(game_date_str.replace("Z", "+00:00"))
+                    # Convert to US Eastern time to get the correct local game date
+                    game_datetime_et = game_datetime_utc.astimezone(ZoneInfo("America/New_York"))
+                    game_date = game_datetime_et.date()
 
                     games.append({
                         "event_id": event_id,
@@ -375,7 +380,8 @@ async def get_historical_data(start_week: int, start_year: int,
         # Fetch stats for all games
         rows = await fetch_all_game_stats(session, all_games, max_concurrent, fetch_market_data)
 
-    return pd.DataFrame(rows)
+    # Filter out games with missing Polymarket data (some games don't have markets)
+    return pd.DataFrame(rows).dropna()
 
 
 def get_historical_data_sync(start_week: int, start_year: int,

@@ -71,41 +71,66 @@ async def get_opening_price(
     Get opening price for a Polymarket game.
     Opening price is defined as price 60 seconds before game start.
     Returns dict with away_price, home_price, start_ts, market_open_ts or empty dict on error.
+
+    Note: Polymarket sometimes reverses team order in slugs. This function tries both orders.
     """
     async with _polymarket_semaphore:
-        try:
-            slug = f"{sport.lower()}-{away_team.lower()}-{home_team.lower()}-{date.strftime('%Y-%m-%d')}"
-            market_url = f"https://gamma-api.polymarket.com/markets/slug/{slug}"
-            opening_price_url = "https://clob.polymarket.com/prices-history"
+        # Try normal order first (away-home), then reversed (home-away)
+        team_orders = [
+            (away_team, home_team, False),  # Normal order
+            (home_team, away_team, True)     # Reversed order
+        ]
 
-            # Get market metadata using rate-limited request
-            data = await _rate_limited_get(session, market_url)
+        for first_team, second_team, is_reversed in team_orders:
+            try:
+                slug = f"{sport.lower()}-{first_team.lower()}-{second_team.lower()}-{date.strftime('%Y-%m-%d')}"
+                market_url = f"https://gamma-api.polymarket.com/markets/slug/{slug}"
+                opening_price_url = "https://clob.polymarket.com/prices-history"
 
-            start_date = datetime.fromisoformat(data["gameStartTime"].replace("Z", "+00:00"))
-            start_ts = int(start_date.timestamp()) - 60
-            end_ts = start_ts + 60
+                # Get market metadata using rate-limited request
+                data = await _rate_limited_get(session, market_url)
 
-            clobIdTokens = json.loads(data["clobTokenIds"])
-            market_open = int(datetime.fromisoformat(data["startDate"].replace("Z", "+00:00")).timestamp())
-            market_close = int(datetime.fromisoformat(data["endDate"].replace("Z", "+00:00")).timestamp())
-            queryString = {
-                "market": clobIdTokens[0],
-                "startTs": start_ts,
-                "endTs": end_ts
-            }
+                start_date = datetime.fromisoformat(data["gameStartTime"].replace("Z", "+00:00"))
+                start_ts = int(start_date.timestamp()) - 60
+                end_ts = start_ts + 60
 
-            # Get price history using rate-limited request
-            info = await _rate_limited_get(session, opening_price_url, params=queryString)
+                clobIdTokens = json.loads(data["clobTokenIds"])
+                market_open = int(datetime.fromisoformat(data["startDate"].replace("Z", "+00:00")).timestamp())
+                market_close = int(datetime.fromisoformat(data["endDate"].replace("Z", "+00:00")).timestamp())
+                queryString = {
+                    "market": clobIdTokens[0],
+                    "startTs": start_ts,
+                    "endTs": end_ts
+                }
 
-            away = info["history"][0]["p"]
-            home = 1.0 - away
-            return {
-                "away_price": away,
-                "home_price": home,
-                "start_ts": start_ts,
-                "market_open_ts": market_open,
-                "market_close_ts": market_close
-            }
-        except Exception:
-            # Return empty dict on error (consistent with kalshi_api pattern)
-            return {}
+                # Get price history using rate-limited request
+                info = await _rate_limited_get(session, opening_price_url, params=queryString)
+
+                # Extract prices
+                price_first = info["history"][0]["p"]
+                price_second = 1.0 - price_first
+
+                # If reversed, swap the prices back to match away/home order
+                if is_reversed:
+                    away_price = price_second
+                    home_price = price_first
+                else:
+                    away_price = price_first
+                    home_price = price_second
+
+                return {
+                    "away_price": away_price,
+                    "home_price": home_price,
+                    "start_ts": start_ts,
+                    "market_open_ts": market_open,
+                    "market_close_ts": market_close
+                }
+            except Exception:
+                # If this order failed and we haven't tried reversed yet, continue to next iteration
+                if not is_reversed:
+                    continue
+                # If both orders failed, return empty dict
+                return {}
+
+        # Should not reach here, but return empty dict as fallback
+        return {}

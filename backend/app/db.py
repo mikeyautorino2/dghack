@@ -25,7 +25,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 class NBAGameFeatures(Base):
-    __tablename__ = "games_features"
+    __tablename__ = "nba_games_features"
 
     game_id = Column(String, primary_key=True, nullable=False)
 

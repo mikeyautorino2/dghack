@@ -5,6 +5,7 @@ import time
 from datetime import date, datetime, timedelta
 from typing import Dict, Optional, Union
 
+import aiohttp
 import pandas as pd
 import requests
 from nba_api.stats.endpoints import teamgamelog, scoreboardv2
@@ -199,101 +200,104 @@ async def get_matchups_cumulative_stats_between(
     if end_day < start_day:
         raise ValueError("end_date must be on or after start_date")
 
-    semaphore = asyncio.Semaphore(max(1, max_concurrency))
-    tasks = []
+    # Create session for Polymarket API calls
+    async with aiohttp.ClientSession() as session:
+        semaphore = asyncio.Semaphore(max(1, max_concurrency))
+        tasks = []
 
-    current = start_day
-    while current <= end_day:
-        try:
-            board_df = await _fetch_scoreboard(current)
-        except Exception as err:
-            print(f"Skipping {current.isoformat()}: scoreboard error: {err}")
-            current += timedelta(days=1)
-            continue
-
-        if board_df.empty:
-            current += timedelta(days=1)
-            continue
-
-        for _, row in board_df.iterrows():
-            game_id = row["GAME_ID"]
-            home_id = int(row["HOME_TEAM_ID"])
-            away_id = int(row["VISITOR_TEAM_ID"])
-            
-            if str(home_id) not in _TEAMS or str(away_id) not in _TEAMS:
+        current = start_day
+        while current <= end_day:
+            try:
+                board_df = await _fetch_scoreboard(current)
+            except Exception as err:
+                print(f"Skipping {current.isoformat()}: scoreboard error: {err}")
+                current += timedelta(days=1)
                 continue
-            async def _collect_game(
-                game_id=game_id,
-                game_date=current,
-                home_id=home_id,
-                away_id=away_id,
-            ):
-                async with semaphore:
-                    season = _season_from_date(game_date)
-                    away_team_slug = str(_TEAMS[str(away_id)]["abbreviation"]).lower()
-                    home_team_slug = str(_TEAMS[str(home_id)]["abbreviation"]).lower()
-                    # 1) Fetch NBA stats concurrently
-                    home_stats, away_stats = await asyncio.gather(
-                        _get_team_cumulative_stats(
-                            home_id, _as_datetime(game_date), season, season_type
-                        ),
-                        _get_team_cumulative_stats(
-                            away_id, _as_datetime(game_date), season, season_type
-                        ),
-                    )
-                    # 2) Best-effort Polymarket call
-                    slug = f"nba-{away_team_slug}-{home_team_slug}-{game_date:%Y-%m-%d}"
-                    try:
-                        opening = await polyapi.get_opening_price(
-                            sport="nba",
-                            date=game_date,
-                            away_team=away_team_slug,
-                            home_team=home_team_slug,
+
+            if board_df.empty:
+                current += timedelta(days=1)
+                continue
+
+            for _, row in board_df.iterrows():
+                game_id = row["GAME_ID"]
+                home_id = int(row["HOME_TEAM_ID"])
+                away_id = int(row["VISITOR_TEAM_ID"])
+
+                if str(home_id) not in _TEAMS or str(away_id) not in _TEAMS:
+                    continue
+                async def _collect_game(
+                    game_id=game_id,
+                    game_date=current,
+                    home_id=home_id,
+                    away_id=away_id,
+                ):
+                    async with semaphore:
+                        season = _season_from_date(game_date)
+                        away_team_slug = str(_TEAMS[str(away_id)]["abbreviation"]).lower()
+                        home_team_slug = str(_TEAMS[str(home_id)]["abbreviation"]).lower()
+                        # 1) Fetch NBA stats concurrently
+                        home_stats, away_stats = await asyncio.gather(
+                            _get_team_cumulative_stats(
+                                home_id, _as_datetime(game_date), season, season_type
+                            ),
+                            _get_team_cumulative_stats(
+                                away_id, _as_datetime(game_date), season, season_type
+                            ),
                         )
-                    except Exception as e:
-                        print(f"Polymarket error for slug {slug}: {e}")
-                        opening = None
+                        # 2) Best-effort Polymarket call
+                        slug = f"nba-{away_team_slug}-{home_team_slug}-{game_date:%Y-%m-%d}"
+                        try:
+                            opening = await polyapi.get_opening_price(
+                                session,  # Pass session as first argument
+                                sport="nba",
+                                date=game_date,
+                                away_team=away_team_slug,
+                                home_team=home_team_slug,
+                            )
+                        except Exception as e:
+                            print(f"Polymarket error for slug {slug}: {e}")
+                            opening = None
 
-                    row_data = {
-                        "GAME_ID": game_id,
-                        "GAME_DATE": pd.Timestamp(game_date),
-                        "HOME_TEAM_ID": home_id,
-                        "AWAY_TEAM_ID": away_id,
-                    }
-                    # cumulative stats
-                    for key, value in home_stats.items():
-                        row_data[f"HOME_{key}"] = value
-                    for key, value in away_stats.items():
-                        row_data[f"AWAY_{key}"] = value
-                    # opening prices + timestamps (new columns)
-                    if opening is not None:
-                        row_data["away_team_price"] = opening["away_price"]
-                        row_data["home_team_price"] = opening["home_price"]
-                        row_data["start_ts"] = opening["start_ts"]
-                        row_data["market_open_ts"] = opening["market_open_ts"]
-                    else:
-                        row_data["away_team_price"] = None
-                        row_data["home_team_price"] = None
-                        row_data["start_ts"] = None
-                        row_data["market_open_ts"] = None
-                    return row_data
-            tasks.append(asyncio.create_task(_collect_game()))
+                        row_data = {
+                            "GAME_ID": game_id,
+                            "GAME_DATE": pd.Timestamp(game_date),
+                            "HOME_TEAM_ID": home_id,
+                            "AWAY_TEAM_ID": away_id,
+                        }
+                        # cumulative stats
+                        for key, value in home_stats.items():
+                            row_data[f"HOME_{key}"] = value
+                        for key, value in away_stats.items():
+                            row_data[f"AWAY_{key}"] = value
+                        # opening prices + timestamps (new columns)
+                        if opening is not None:
+                            row_data["away_team_price"] = opening["away_price"]
+                            row_data["home_team_price"] = opening["home_price"]
+                            row_data["start_ts"] = opening["start_ts"]
+                            row_data["market_open_ts"] = opening["market_open_ts"]
+                        else:
+                            row_data["away_team_price"] = None
+                            row_data["home_team_price"] = None
+                            row_data["start_ts"] = None
+                            row_data["market_open_ts"] = None
+                        return row_data
+                tasks.append(asyncio.create_task(_collect_game()))
 
-        current += timedelta(days=1)
+            current += timedelta(days=1)
 
-    if not tasks:
-        return pd.DataFrame()
+        if not tasks:
+            return pd.DataFrame()
 
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-    
-    rows = []
-    for result in results:
-        if isinstance(result, Exception):
-            print(f"Game collection error: {result}")
-            continue
-        rows.append(result)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    return pd.DataFrame(rows) if rows else pd.DataFrame()
+        rows = []
+        for result in results:
+            if isinstance(result, Exception):
+                print(f"Game collection error: {result}")
+                continue
+            rows.append(result)
+
+        return pd.DataFrame(rows) if rows else pd.DataFrame()
 
 
 __all__ = ["get_matchups_cumulative_stats_between"]

@@ -5,11 +5,9 @@ import pandas as pd
 from typing import List, Dict, Optional
 from tqdm.asyncio import tqdm_asyncio
 
-import kalshi_api
+import polymarket_api as polyapi
 
-SERIES_TAG = "KXMLBGAME"
-
-# MLB team ID: (Full Name, Kalshi Abbreviation, Polymarket Abbreviation)
+# MLB team ID: (Full Name, [Unused - was Kalshi], Polymarket Abbreviation)
 TEAM_ID_MAP = {
     133: ("Athletics", "ATH", "oak"),
     134: ("Pittsburgh Pirates", "PIT", "pit"),
@@ -43,16 +41,16 @@ TEAM_ID_MAP = {
     121: ("New York Mets", "NYM", "nym")
 }
 
-async def get_historical_data(start_date: dt.date, end_date: dt.date, 
-                              max_concurrent: int = 10, 
+async def get_historical_data(start_date: dt.date, end_date: dt.date,
+                              max_concurrent: int = 10,
                               fetch_market_data: bool = True) -> pd.DataFrame:
     """Fetch historical MLB game data with team stats and optionally market data.
-    
+
     Args:
         start_date: Start date for game data
         end_date: End date for game data
         max_concurrent: Maximum number of concurrent stat requests
-        fetch_market_data: Whether to fetch Kalshi market data
+        fetch_market_data: Whether to fetch Polymarket market data
     """
     
     # Get the schedule
@@ -96,7 +94,7 @@ async def get_historical_data(start_date: dt.date, end_date: dt.date,
     async with aiohttp.ClientSession() as session:
         rows = await fetch_all_game_stats(session, games_to_fetch, max_concurrent, fetch_market_data)
     
-    return pd.DataFrame(rows).dropna() # occasionally, Kalshi api is stupid so get useless NaN vals
+    return pd.DataFrame(rows) #.dropna() # occasionally, Polymarket api fails so get useless NaN vals
 
 
 async def fetch_all_game_stats(session: aiohttp.ClientSession, 
@@ -177,23 +175,23 @@ async def fetch_game_stats(session: aiohttp.ClientSession,
     
     # Fetch market data if requested
     if fetch_market:
-        away_kalshi = TEAM_ID_MAP.get(away_id, (None, None, None))[1]
-        home_kalshi = TEAM_ID_MAP.get(home_id, (None, None, None))[1]
-        
-        if away_kalshi and home_kalshi:
-            market_data = await kalshi_api.get_market_data(
-                session, 
-                SERIES_TAG, 
-                game_date, 
-                away_kalshi, 
-                home_kalshi
+        away_poly = TEAM_ID_MAP.get(away_id, (None, None, None))[2]
+        home_poly = TEAM_ID_MAP.get(home_id, (None, None, None))[2]
+
+        if away_poly and home_poly:
+            market_data = await polyapi.get_opening_price(
+                session,
+                sport="mlb",
+                date=game_date,
+                away_team=away_poly,
+                home_team=home_poly
             )
-            
-            row["kalshi_away_price"] = market_data.get("away_price")
-            row["kalshi_home_price"] = market_data.get("home_price")
-            row["kalshi_start_ts"] = market_data.get("start_ts")
-            row["kalshi_market_open_ts"] = market_data.get("market_open_ts")
-            row["kalshi_market_close_ts"] = market_data.get("market_close_ts")
+
+            row["polymarket_away_price"] = market_data.get("away_price")
+            row["polymarket_home_price"] = market_data.get("home_price")
+            row["polymarket_start_ts"] = market_data.get("start_ts")
+            row["polymarket_market_open_ts"] = market_data.get("market_open_ts")
+            row["polymarket_market_close_ts"] = None  # Polymarket doesn't provide close timestamp
     
     return row
 

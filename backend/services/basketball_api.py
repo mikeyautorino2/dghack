@@ -18,6 +18,7 @@ RETRY_BACKOFF_SECONDS = 5.0
 
 _last_call_ts = 0.0
 _rate_lock = asyncio.Lock()
+_gamelog_cache: Dict[tuple, pd.DataFrame] = {}  # Cache for (team_id, season, season_type) -> full game log
 
 PER_GAME_COLUMNS = [
     "MIN", "FGM", "FGA", "FG3M", "FG3A", "FTM", "FTA",
@@ -67,15 +68,19 @@ def _season_from_date(game_day: date) -> str:
     return f"{start_year}-{str(end_year).zfill(2)}"
 
 
-async def _fetch_team_gamelog(
+async def _fetch_full_season_gamelog(
     team_id: int,
     season: str,
     season_type: str,
-    through_date: datetime,
 ) -> pd.DataFrame:
-    """Fetch team game log up to (but not including) through_date."""
-    date_to = (through_date - timedelta(days=1)).strftime("%m/%d/%Y")
-    
+    """Fetch full season game log for a team (cached)."""
+    cache_key = (team_id, season, season_type)
+
+    # Check cache first
+    if cache_key in _gamelog_cache:
+        return _gamelog_cache[cache_key]
+
+    # Fetch full season (no date_to filter)
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
             response = await asyncio.to_thread(
@@ -84,7 +89,6 @@ async def _fetch_team_gamelog(
                 season=season,
                 season_type_all_star=season_type,
                 league_id_nullable="00",
-                date_to_nullable=date_to,
                 timeout=REQUEST_TIMEOUT,
             )
             df = response.get_data_frames()[0]
@@ -92,6 +96,9 @@ async def _fetch_team_gamelog(
                 raise RuntimeError("TeamGameLog response missing GAME_DATE column")
             df["GAME_DATE"] = pd.to_datetime(df["GAME_DATE"], format='mixed')
             await _rate_limit()
+
+            # Cache the result
+            _gamelog_cache[cache_key] = df
             return df
         except Exception as err:
             fail_fast = isinstance(err, requests.exceptions.ConnectionError)
@@ -100,9 +107,27 @@ async def _fetch_team_gamelog(
             sleep_for = min(RETRY_BACKOFF_SECONDS * attempt, 6.0)
             print(f"Retrying TeamGameLog for team {team_id} (attempt {attempt}): {err}")
             await asyncio.sleep(sleep_for)
-    
+
     # Should never reach here due to raise in loop, but satisfies type checker
     raise RuntimeError(f"Failed to fetch team gamelog for team {team_id}")
+
+
+async def _fetch_team_gamelog(
+    team_id: int,
+    season: str,
+    season_type: str,
+    through_date: datetime,
+) -> pd.DataFrame:
+    """Fetch team game log up to (but not including) through_date (uses cache)."""
+    # Get full season from cache
+    full_log = await _fetch_full_season_gamelog(team_id, season, season_type)
+
+    # Filter to games before through_date
+    if full_log.empty:
+        return full_log
+
+    filtered = full_log[full_log["GAME_DATE"] < through_date].copy()
+    return filtered
 
 
 async def _fetch_scoreboard(game_day: date) -> pd.DataFrame:
@@ -118,7 +143,6 @@ async def _fetch_scoreboard(game_day: date) -> pd.DataFrame:
                 timeout=REQUEST_TIMEOUT,
             )
             df = board.game_header.get_data_frame()
-            df.head
             await _rate_limit()
             return df
         except Exception as err:
@@ -203,21 +227,31 @@ async def get_matchups_cumulative_stats_between(
     # Create session for Polymarket API calls
     async with aiohttp.ClientSession() as session:
         semaphore = asyncio.Semaphore(max(1, max_concurrency))
+
+        # Pre-fetch all scoreboards in parallel (with rate limiting)
+        date_list = [start_day + timedelta(days=i) for i in range((end_day - start_day).days + 1)]
+
+        # Limit concurrent scoreboard fetches to prevent API overwhelming
+        async def _fetch_scoreboard_limited(date_val):
+            async with scoreboard_semaphore:
+                return await _fetch_scoreboard(date_val)
+
+        scoreboard_semaphore = asyncio.Semaphore(10)  # Max 10 concurrent scoreboard requests
+        scoreboard_tasks = [_fetch_scoreboard_limited(d) for d in date_list]
+        scoreboard_results = await asyncio.gather(*scoreboard_tasks, return_exceptions=True)
+
+        # Build date->scoreboard mapping
+        scoreboards = {}
+        for date_val, result in zip(date_list, scoreboard_results):
+            if isinstance(result, Exception):
+                print(f"Skipping {date_val.isoformat()}: scoreboard error: {result}")
+                continue
+            if not result.empty:
+                scoreboards[date_val] = result
+
+        # Process all games
         tasks = []
-
-        current = start_day
-        while current <= end_day:
-            try:
-                board_df = await _fetch_scoreboard(current)
-            except Exception as err:
-                print(f"Skipping {current.isoformat()}: scoreboard error: {err}")
-                current += timedelta(days=1)
-                continue
-
-            if board_df.empty:
-                current += timedelta(days=1)
-                continue
-
+        for current, board_df in scoreboards.items():
             for _, row in board_df.iterrows():
                 game_id = row["GAME_ID"]
                 home_id = int(row["HOME_TEAM_ID"])
@@ -282,8 +316,6 @@ async def get_matchups_cumulative_stats_between(
                             row_data["market_open_ts"] = None
                         return row_data
                 tasks.append(asyncio.create_task(_collect_game()))
-
-            current += timedelta(days=1)
 
         if not tasks:
             return pd.DataFrame()

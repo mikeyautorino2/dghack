@@ -87,7 +87,7 @@ async def get_opening_price(
 
             clobIdTokens = json.loads(data["clobTokenIds"])
             market_open = int(datetime.fromisoformat(data["startDate"].replace("Z", "+00:00")).timestamp())
-
+            market_close = int(datetime.fromisoformat(data["endDate"].replace("Z", "+00:00")).timestamp())
             queryString = {
                 "market": clobIdTokens[0],
                 "startTs": start_ts,
@@ -99,12 +99,12 @@ async def get_opening_price(
 
             away = info["history"][0]["p"]
             home = 1.0 - away
-
             return {
                 "away_price": away,
                 "home_price": home,
                 "start_ts": start_ts,
-                "market_open_ts": market_open
+                "market_open_ts": market_open,
+                "market_close_ts": market_close
             }
         except Exception:
             # Return empty dict on error (consistent with kalshi_api pattern)

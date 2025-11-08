@@ -6,7 +6,7 @@ import pandas as pd
 from typing import List, Dict, Optional
 from tqdm.asyncio import tqdm_asyncio
 
-import polymarket_api as polyapi
+from . import polymarket_api as polyapi
 
 # NFL team ID: (Full Name, [Unused - was Kalshi], Polymarket Abbreviation)
 TEAM_ID_MAP = {

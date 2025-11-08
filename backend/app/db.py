@@ -158,7 +158,7 @@ def insert_nba_games(df: pd.DataFrame) -> int:
     try:
         # Use pandas to_sql for efficient bulk insert
         rows_inserted = df_prepared.to_sql(
-            'games_features',
+            'nba_games_features',
             engine,
             if_exists='append',
             index=False,

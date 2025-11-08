@@ -10,7 +10,7 @@ import pandas as pd
 import requests
 from nba_api.stats.endpoints import teamgamelog, scoreboardv2
 from nba_api.stats.static import teams as teams_static
-import polymarket_api as polyapi
+from . import polymarket_api as polyapi
 RATE_LIMIT_SECONDS = 0.6
 REQUEST_TIMEOUT = 30
 

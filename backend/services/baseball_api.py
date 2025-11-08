@@ -5,7 +5,7 @@ import pandas as pd
 from typing import List, Dict, Optional
 from tqdm.asyncio import tqdm_asyncio
 
-import polymarket_api as polyapi
+from . import polymarket_api as polyapi
 
 # MLB team ID: (Full Name, [Unused - was Kalshi], Polymarket Abbreviation)
 TEAM_ID_MAP = {
@@ -93,27 +93,27 @@ async def get_historical_data(start_date: dt.date, end_date: dt.date,
     # Fetch all stats with concurrency control
     async with aiohttp.ClientSession() as session:
         rows = await fetch_all_game_stats(session, games_to_fetch, max_concurrent, fetch_market_data)
-    
+
     return pd.DataFrame(rows) #.dropna() # occasionally, Polymarket api fails so get useless NaN vals
 
 
-async def fetch_all_game_stats(session: aiohttp.ClientSession, 
-                               games: List[Dict], 
-                               max_concurrent: int, 
+async def fetch_all_game_stats(session: aiohttp.ClientSession,
+                               games: List[Dict],
+                               max_concurrent: int,
                                fetch_market_data: bool) -> List[Dict]:
     """Fetch stats for all games with concurrency control."""
     if not games:
         return []
-    
+
     semaphore = asyncio.Semaphore(max_concurrent)
-    
+
     async def fetch_with_limit(game):
         async with semaphore:
             return await fetch_game_stats(session, game, fetch_market_data)
-    
+
     tasks = [fetch_with_limit(game) for game in games]
     results = await tqdm_asyncio.gather(*tasks, desc="Fetching games")
-    
+
     # Filter out failures
     rows = []
     for i, result in enumerate(results):
@@ -121,7 +121,7 @@ async def fetch_all_game_stats(session: aiohttp.ClientSession,
             rows.append(result)
         else:
             print(f"Error fetching game {games[i]['game_id']}: {result}")
-    
+
     return rows
 
 

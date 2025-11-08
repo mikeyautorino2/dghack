@@ -161,11 +161,11 @@ async def fetch_game_stats(session: aiohttp.ClientSession,
     # Build row
     row = {
         "game_id": game_info["game_id"],
-        "date": game_info["date"],
-        "away": game_info["away"],
-        "away_id": game_info["away_id"],
-        "home": game_info["home"],
-        "home_id": game_info["home_id"]
+        "game_date": game_info["date"],
+        "away_team": game_info["away"],
+        "away_team_id": game_info["away_id"],
+        "home_team": game_info["home"],
+        "home_team_id": game_info["home_id"]
     }
     
     flatten_stats(row, away_hitting, "away_hitting")

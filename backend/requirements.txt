@@ -1,4 +1,4 @@
-sorucaiohappyeyeballs==2.6.1
+aiohappyeyeballs==2.6.1
 aiohttp==3.13.2
 aiosignal==1.4.0
 appnope==0.1.4
@@ -51,3 +51,8 @@ tzdata==2025.2
 urllib3==2.5.0
 wcwidth==0.2.14
 yarl==1.22.0
+
+# Database dependencies
+SQLAlchemy==2.0.36
+psycopg2-binary==2.9.10
+python-dotenv==1.0.1

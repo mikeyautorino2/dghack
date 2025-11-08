@@ -13,6 +13,18 @@ from nba_api.stats.static import teams as teams_static
 import polymarket_api as polyapi
 RATE_LIMIT_SECONDS = 0.6
 REQUEST_TIMEOUT = 30
+
+# Cache team information for fast lookups
+_TEAM_INFO_CACHE = {}
+
+def _get_team_info(team_id: int) -> dict:
+    """Get team info from cache or fetch if not cached."""
+    if not _TEAM_INFO_CACHE:
+        # Populate cache on first call
+        all_teams = teams_static.get_teams()
+        for team in all_teams:
+            _TEAM_INFO_CACHE[team['id']] = team
+    return _TEAM_INFO_CACHE.get(team_id, {})
 MAX_ATTEMPTS = 3
 RETRY_BACKOFF_SECONDS = 5.0
 
@@ -292,17 +304,23 @@ async def get_matchups_cumulative_stats_between(
                             print(f"Polymarket error for slug {slug}: {e}")
                             opening = None
 
+                        # Get team names
+                        home_team_info = _get_team_info(home_id)
+                        away_team_info = _get_team_info(away_id)
+
                         row_data = {
-                            "GAME_ID": game_id,
-                            "GAME_DATE": pd.Timestamp(game_date),
-                            "HOME_TEAM_ID": home_id,
-                            "AWAY_TEAM_ID": away_id,
+                            "game_id": game_id,
+                            "game_date": pd.Timestamp(game_date),
+                            "home_team_id": home_id,
+                            "away_team_id": away_id,
+                            "home_team": home_team_info.get('full_name', 'Unknown'),
+                            "away_team": away_team_info.get('full_name', 'Unknown'),
                         }
-                        # cumulative stats
+                        # cumulative stats (lowercase)
                         for key, value in home_stats.items():
-                            row_data[f"HOME_{key}"] = value
+                            row_data[f"home_{key}"] = value
                         for key, value in away_stats.items():
-                            row_data[f"AWAY_{key}"] = value
+                            row_data[f"away_{key}"] = value
                         # opening prices + timestamps (new columns)
                         if opening is not None:
                             row_data["polymarket_away_price"] = opening["away_price"]

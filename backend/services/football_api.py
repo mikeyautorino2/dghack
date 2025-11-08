@@ -244,13 +244,13 @@ async def fetch_game_stats(session: aiohttp.ClientSession, game_info: Dict, fetc
         # Build row
         row = {
             "game_id": event_id,
-            "date": game_date,
+            "game_date": game_date,
             "week": week,
             "year": year,
             "away_team": game_info["away_name"],
-            "away_id": away_id,
+            "away_team_id": away_id,
             "home_team": game_info["home_name"],
-            "home_id": home_id
+            "home_team_id": home_id
         }
 
         # Add cumulative stats with prefixes

@@ -10,38 +10,38 @@ import polymarket_api as polyapi
 
 # NFL team ID: (Full Name, [Unused - was Kalshi], Polymarket Abbreviation)
 TEAM_ID_MAP = {
-    1: ("Atlanta Falcons", "---", "atl"),
-    2: ("Buffalo Bills", "---", "buf"),
-    3: ("Chicago Bears", "---", "chi"),
-    4: ("Cincinnati Bengals", "---", "cin"),
-    5: ("Cleveland Browns", "---", "cle"),
-    6: ("Dallas Cowboys", "---", "dal"),
-    7: ("Denver Broncos", "---", "den"),
-    8: ("Detroit Lions", "---", "det"),
-    9: ("Green Bay Packers", "---", "gb"),
-    10: ("Tennessee Titans", "---", "ten"),
-    11: ("Indianapolis Colts", "---", "ind"),
-    12: ("Kansas City Chiefs", "---", "kc"),
-    13: ("Las Vegas Raiders", "---", "lv"),
-    14: ("Los Angeles Rams", "---", "la"),
-    15: ("Miami Dolphins", "---", "mia"),
-    16: ("Minnesota Vikings", "---", "min"),
-    17: ("New England Patriots", "---", "ne"),
-    18: ("New Orleans Saints", "---", "no"),
-    19: ("New York Giants", "---", "nyg"),
-    20: ("New York Jets", "---", "nyj"),
-    21: ("Philadelphia Eagles", "---", "phi"),
-    22: ("Arizona Cardinals", "---", "ari"),
-    23: ("Pittsburgh Steelers", "---", "pit"),
-    24: ("Los Angeles Chargers", "---", "lac"),
-    25: ("San Francisco 49ers", "---", "sf"),
-    26: ("Seattle Seahawks", "---", "sea"),
-    27: ("Tampa Bay Buccaneers", "---", "tb"),
-    28: ("Washington Commanders", "---", "was"),
-    29: ("Carolina Panthers", "---", "car"),
-    30: ("Jacksonville Jaguars", "---", "jax"),
-    33: ("Baltimore Ravens", "---", "bal"),
-    34: ("Houston Texans", "---", "hou"),
+    1: ("Atlanta Falcons", "ATL", "atl"),
+    2: ("Buffalo Bills", "BUF", "buf"),
+    3: ("Chicago Bears", "CHI", "chi"),
+    4: ("Cincinnati Bengals", "CIN", "cin"),
+    5: ("Cleveland Browns", "CLE", "cle"),
+    6: ("Dallas Cowboys", "DAL", "dal"),
+    7: ("Denver Broncos", "DEN", "den"),
+    8: ("Detroit Lions", "DET", "det"),
+    9: ("Green Bay Packers", "GB", "gb"),
+    10: ("Tennessee Titans", "TEN", "ten"),
+    11: ("Indianapolis Colts", "IND", "ind"),
+    12: ("Kansas City Chiefs", "KC", "kc"),
+    13: ("Las Vegas Raiders", "LV", "lv"),
+    14: ("Los Angeles Rams", "LA", "la"),
+    15: ("Miami Dolphins", "MIA", "mia"),
+    16: ("Minnesota Vikings", "MIN", "min"),
+    17: ("New England Patriots", "NE", "ne"),
+    18: ("New Orleans Saints", "NO", "no"),
+    19: ("New York Giants", "NYG", "nyg"),
+    20: ("New York Jets", "NYJ", "nyj"),
+    21: ("Philadelphia Eagles", "PHI", "phi"),
+    22: ("Arizona Cardinals", "ARI", "ari"),
+    23: ("Pittsburgh Steelers", "PIT", "pit"),
+    24: ("Los Angeles Chargers", "LAC", "lac"),
+    25: ("San Francisco 49ers", "SF", "sf"),
+    26: ("Seattle Seahawks", "SEA", "sea"),
+    27: ("Tampa Bay Buccaneers", "TB", "tb"),
+    28: ("Washington Commanders", "WAS", "was"),
+    29: ("Carolina Panthers", "CAR", "car"),
+    30: ("Jacksonville Jaguars", "JAC", "jax"),
+    33: ("Baltimore Ravens", "BAL", "bal"),
+    34: ("Houston Texans", "HOU", "hou"),
 }
 
 
@@ -346,11 +346,14 @@ async def get_historical_data(start_week: int, start_year: int,
             for week in range(1, 19):  # NFL regular season is usually 18 weeks
                 weeks_to_fetch.append((start_year, week))
 
+            # Fetch all intermediate years (full 18 weeks each)
+            for year in range(start_year + 1, end_year):
+                for week in range(1, 19):
+                    weeks_to_fetch.append((year, week))
+
             # Fetch weeks 1 through end_week of end year
             for week in range(1, end_week + 1):
                 weeks_to_fetch.append((end_year, week))
-
-        print(f"Fetching schedules for {len(weeks_to_fetch)} weeks: {weeks_to_fetch}")
 
         # Fetch schedules for all weeks
         schedule_tasks = [fetch_schedule(session, year, week) for year, week in weeks_to_fetch]
@@ -369,7 +372,8 @@ async def get_historical_data(start_week: int, start_year: int,
                     else:
                         # Multi-season: include if in start year (>= start_week) or end year (<= end_week)
                         if (game["year"] == start_year and game["week"] >= start_week) or \
-                           (game["year"] == end_year and game["week"] <= end_week):
+                        (start_year < game["year"] < end_year) or \
+                        (game["year"] == end_year and game["week"] <= end_week):
                             all_games.append(game)
 
         print(f"Found {len(all_games)} games to fetch (filtered to weeks {start_week}-{end_week}, week >= 4)")

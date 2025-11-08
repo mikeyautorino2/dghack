@@ -191,7 +191,7 @@ async def fetch_game_stats(session: aiohttp.ClientSession,
             row["polymarket_home_price"] = market_data.get("home_price")
             row["polymarket_start_ts"] = market_data.get("start_ts")
             row["polymarket_market_open_ts"] = market_data.get("market_open_ts")
-            row["polymarket_market_close_ts"] = None  # Polymarket doesn't provide close timestamp
+            row["polymarket_market_close_ts"] = market_data.get("market_close_ts")
     
     return row
 

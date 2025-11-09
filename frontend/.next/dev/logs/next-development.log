@@ -1,0 +1,11 @@
+[00:00:00.756] Server  LOG      ✓ Ready in 479ms
+[00:00:10.503] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:10.532] Server  ERROR   (node:3569) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[00:00:11.541] Browser ERROR   Each child in a list should have a unique "key" prop.%s%s See https://react.dev/link/warning-keys for more information. 
+
+Check the render method of `MarketGrid`. 
+[00:01:07.512] Server  LOG      ✓ Compiled in 30ms
+[00:01:29.342] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:03:13.910] Browser ERROR   Failed to fetch analysis: {}
+[00:03:13.910] Browser ERROR   Failed to fetch analysis: {}

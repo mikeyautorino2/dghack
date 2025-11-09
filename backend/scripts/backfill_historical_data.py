@@ -18,8 +18,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import asyncio
 from datetime import datetime
 from sqlalchemy import text
-from backend.services import football_api
-from backend.app.db import insert_nfl_games, engine
+from backend.services import football_api, basketball_api
+from backend.app.db import insert_nfl_games, insert_nba_games, engine
 
 
 # ============================================================================
@@ -115,6 +115,52 @@ async def backfill_nfl():
 
 
 # ============================================================================
+# NBA BACKFILL
+# ============================================================================
+
+async def backfill_nba():
+    """
+    Backfill NBA data from 2023-24 season through 2024-25 season.
+
+    Note: NBA seasons run October through June (82 games regular season)
+    Season spans two calendar years (e.g., 2024 = 2023-24 season is Oct 2023 - June 2024)
+    """
+    print("=" * 70)
+    print("NBA DATA BACKFILL")
+    print("=" * 70)
+    print("\nFetching NBA data from 2023-24 season through 2024-25 season...")
+
+    try:
+        # Fetch data from API (async)
+        # 2024 = 2023-24 season (Oct 2023 - June 2024)
+        # 2025 = 2024-25 season (Oct 2024 - June 2025)
+        START_SEASON = 2023
+        END_SEASON = 2025
+
+        df = await basketball_api.get_historical_data(
+            start_season=START_SEASON,
+            end_season=END_SEASON,
+            fetch_market_data=True
+        )
+
+        if df.empty:
+            print("  ⚠️  No games found")
+            return
+
+        # Insert into database
+        rows = insert_nba_games(df)
+        print(f"\n✓ Successfully inserted {rows} games")
+
+    except Exception as e:
+        print(f"\n✗ Error fetching NBA data: {e}")
+        raise
+
+    print(f"\n{'─' * 70}")
+    print(f"NBA BACKFILL COMPLETE: {rows} total games inserted")
+    print(f"{'─' * 70}\n")
+
+
+# ============================================================================
 # MAIN
 # ============================================================================
 
@@ -144,7 +190,7 @@ async def main():
 
     try:
         # Run NFL backfill (async)
-        await backfill_nfl()
+        await backfill_nba()
 
     except KeyboardInterrupt:
         print("\n\n⚠️  Backfill interrupted by user")

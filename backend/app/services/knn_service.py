@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
 import numpy as np
-from app.db import NBAGameFeatures, NFLGameFeatures
+from ..db import NBAGameFeatures, NFLGameFeatures
 
 # Feature definitions per sport
 FEATURES = {
@@ -132,7 +132,8 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
     target_scaled = scaler.transform([target_vals])
 
     # Query cached model (fast!)
-    distances, indices = knn_model.kneighbors(target_scaled)
+    # Request k+1 to account for query game potentially being in results
+    distances, indices = knn_model.kneighbors(target_scaled, n_neighbors=k+1)
 
     # If using symmetric features, no need for flip-and-search (symmetry is built-in)
     if use_symmetric:
@@ -140,8 +141,11 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
         results = []
         max_dist = distances[0].max() if distances[0].max() > 0 else 1
 
-        for i, idx in enumerate(indices[0][:k]):
+        for i, idx in enumerate(indices[0]):
             game = all_games[idx]
+            # Skip the query game itself
+            if game.game_id == game_id:
+                continue
             similarity = 100 * (1 - distances[0][i] / max_dist)
             results.append({
                 'game_id': game.game_id,
@@ -150,6 +154,9 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
                 'away': game.away_team,
                 'similarity': round(similarity, 1)
             })
+            # Stop once we have k results
+            if len(results) >= k:
+                break
         return results
 
     # Otherwise, use flip-and-search approach
@@ -158,6 +165,9 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
 
     for i, idx in enumerate(indices[0]):
         game = all_games[idx]
+        # Skip the query game itself
+        if game.game_id == game_id:
+            continue
         similarity = 100 * (1 - distances[0][i] / max_dist)
         if game.game_id not in results_dict:
             results_dict[game.game_id] = {
@@ -173,11 +183,14 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
         flipped_vals = _flip_features(target_vals, features)
         flipped_scaled = scaler.transform([flipped_vals])
 
-        distances_flip, indices_flip = knn_model.kneighbors(flipped_scaled)
+        distances_flip, indices_flip = knn_model.kneighbors(flipped_scaled, n_neighbors=k+1)
         max_dist_flip = distances_flip[0].max() if distances_flip[0].max() > 0 else 1
 
         for i, idx in enumerate(indices_flip[0]):
             game = all_games[idx]
+            # Skip the query game itself
+            if game.game_id == game_id:
+                continue
             similarity = 100 * (1 - distances_flip[0][i] / max_dist_flip)
             if game.game_id not in results_dict:
                 results_dict[game.game_id] = {

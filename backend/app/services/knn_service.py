@@ -7,8 +7,16 @@ from ..db import NBAGameFeatures, NFLGameFeatures
 
 # Feature definitions per sport
 FEATURES = {
-    'NBA': ['home_avg_pts', 'away_avg_pts', 'home_fg_pct', 'away_fg_pct',
-            'home_avg_reb', 'away_avg_reb', 'home_avg_ast', 'away_avg_ast'],
+    'NBA': [
+        'home_fieldGoalPct', 'away_fieldGoalPct',
+        'home_threePointFieldGoalPct', 'away_threePointFieldGoalPct',
+        'home_freeThrowPct', 'away_freeThrowPct',
+        'home_totalRebounds', 'away_totalRebounds',
+        'home_assists', 'away_assists',
+        'home_turnovers', 'away_turnovers',
+        'home_steals', 'away_steals',
+        'home_blocks', 'away_blocks'
+    ],
     'NFL': ['home_yardsPerPlay', 'away_yardsPerPlay',
             'home_thirdDownEff', 'away_thirdDownEff',
             'home_firstDowns', 'away_firstDowns']

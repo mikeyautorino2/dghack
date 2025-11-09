@@ -1,11 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { MarketGrid } from '@/components/markets/MarketGrid';
 import type { ActiveMarket } from '@/types';
 
 export default function HomePage() {
+  const searchParams = useSearchParams();
+  const sport = searchParams.get('sport') || 'NBA'; // Default to NBA
+
   const [games, setGames] = useState<ActiveMarket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,8 +19,8 @@ export default function HomePage() {
       setIsLoading(true);
       setError(null);
       try {
-        // Fetch upcoming games with active markets
-        const response = await fetch('/api/markets');
+        // Fetch upcoming games with active markets for selected sport
+        const response = await fetch(`/api/markets?sport=${sport}`);
         if (!response.ok) {
           throw new Error('Failed to fetch markets');
         }
@@ -48,7 +52,7 @@ export default function HomePage() {
     // Poll for price updates every 5 minutes
     const interval = setInterval(fetchGames, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [sport]); // Re-fetch when sport filter changes
 
   return (
     <AppShell>

@@ -1,15 +1,29 @@
 import datetime as dt
-from datetime import datetime
+from datetime import datetime, timedelta
 import asyncio
 import aiohttp
 import json
 from collections import deque
+from dataclasses import dataclass
+from typing import Optional
 
 # Global rate limiting infrastructure
 _polymarket_semaphore = asyncio.Semaphore(100)  # Limit concurrent requests
 _polymarket_request_times = deque()
 _polymarket_lock = asyncio.Lock()
 _MAX_REQUESTS_PER_SECOND = 20
+
+# Simple cache for live markets
+@dataclass
+class MarketCache:
+    data: list[dict]
+    timestamp: datetime
+    ttl_seconds: int = 300  # 5 minutes
+
+    def is_expired(self) -> bool:
+        return datetime.now() > self.timestamp + timedelta(seconds=self.ttl_seconds)
+
+_market_cache: dict[str, MarketCache] = {}
 
 
 async def _rate_limited_get(session: aiohttp.ClientSession, url: str, **kwargs):
@@ -267,6 +281,157 @@ async def check_market_exists(
 
         # Both orders failed, market doesn't exist
         return {"exists": False}
+
+
+async def get_active_sports_markets(
+    session: aiohttp.ClientSession,
+    sport: str,
+    limit: int = 50
+) -> list[dict]:
+    """
+    Fetch all active sports markets for a given league from Polymarket.
+
+    Args:
+        session: aiohttp ClientSession
+        sport: "nfl" or "nba" (case-insensitive)
+        limit: Max results to return
+
+    Returns:
+        List of market dicts with structure:
+        [{
+            "event_id": str,
+            "slug": str,
+            "title": str,
+            "game_date": datetime,
+            "away_team": str,
+            "home_team": str,
+            "away_price": float,
+            "home_price": float,
+            "volume": float,
+        }, ...]
+    """
+    # Map sport to Polymarket tag_id
+    SPORT_TAG_MAP = {
+        "nfl": "450",
+        "nba": "745"
+    }
+
+    tag_id = SPORT_TAG_MAP.get(sport.lower())
+    if not tag_id:
+        print(f"Unknown sport: {sport}")
+        return []
+
+    url = "https://gamma-api.polymarket.com/events"
+    params = {
+        "closed": "false",
+        "tag_id": tag_id,
+        "limit": str(limit),
+        "offset": "0",
+        "order": "id",
+        "ascending": "false"
+    }
+
+    try:
+        # Use existing rate limiting
+        data = await _rate_limited_get(session, url, params=params)
+
+        markets = []
+        for event in data:
+            slug = event.get("slug", "")
+            title = event.get("title", "")
+
+            # Extract teams from slug (format: sport-away-home-date)
+            parts = slug.split("-")
+            if len(parts) >= 4:
+                away_team = parts[1].replace("_", " ").title()
+                home_team = parts[2].replace("_", " ").title()
+            else:
+                # Fallback: parse from title
+                away_team, home_team = _parse_teams_from_title(title)
+
+            # Get first market (main moneyline market)
+            market_list = event.get("markets", [])
+            if not market_list:
+                continue
+
+            market = market_list[0]
+            prices_str = market.get("outcomePrices", '["0.5", "0.5"]')
+            prices = json.loads(prices_str) if isinstance(prices_str, str) else prices_str
+
+            # Parse game date
+            start_date_str = event.get("startDate", "")
+            if start_date_str:
+                game_date = datetime.fromisoformat(start_date_str.replace("Z", "+00:00"))
+            else:
+                continue
+
+            markets.append({
+                "event_id": event.get("id"),
+                "slug": slug,
+                "title": title,
+                "game_date": game_date,
+                "away_team": away_team,
+                "home_team": home_team,
+                "away_price": float(prices[0]),
+                "home_price": float(prices[1]),
+                "volume": event.get("volume", 0),
+            })
+
+        return markets
+
+    except Exception as e:
+        print(f"Error fetching {sport} markets: {e}")
+        return []
+
+
+def _parse_teams_from_title(title: str) -> tuple[str, str]:
+    """Parse away/home teams from title like 'Team1 vs Team2'"""
+    if " vs " in title:
+        parts = title.split(" vs ")
+        return parts[0].strip(), parts[1].strip()
+    elif " @ " in title:
+        parts = title.split(" @ ")
+        return parts[0].strip(), parts[1].strip()
+    return ("Unknown", "Unknown")
+
+
+async def get_active_sports_markets_cached(
+    session: aiohttp.ClientSession,
+    sport: str,
+    limit: int = 50,
+    force_refresh: bool = False
+) -> list[dict]:
+    """
+    Cached version of get_active_sports_markets with 5-minute TTL.
+
+    Args:
+        session: aiohttp ClientSession
+        sport: "nfl" or "nba"
+        limit: Max results to return
+        force_refresh: If True, bypass cache
+
+    Returns:
+        List of market dicts (same as get_active_sports_markets)
+    """
+    cache_key = f"{sport.lower()}_{limit}"
+
+    # Check cache
+    if not force_refresh and cache_key in _market_cache:
+        cached = _market_cache[cache_key]
+        if not cached.is_expired():
+            return cached.data
+
+    # Fetch fresh data
+    markets = await get_active_sports_markets(session, sport, limit)
+
+    # Update cache
+    _market_cache[cache_key] = MarketCache(
+        data=markets,
+        timestamp=datetime.now(),
+        ttl_seconds=300  # 5 minutes
+    )
+
+    return markets
 
 
 async def get_price_history(

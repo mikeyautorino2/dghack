@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
+import { PriceHistoryChart } from '@/components/charts/PriceHistoryChart';
 import type { GameAnalysisResponse } from '@/types';
 
 export default function GameDetailPage({
@@ -143,15 +144,14 @@ export default function GameDetailPage({
                     {idx + 1}
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">
-                        {similar.away_team} @ {similar.home_team}
+                    <div className="font-medium">
+                      <span className="text-chart-away">
+                        {similar.away_team}
                       </span>
-                      {similar.mapping === 'flipped' && (
-                        <span className="text-xs px-2 py-0.5 rounded bg-bg-tertiary text-text-tertiary border border-border-default">
-                          Teams flipped
-                        </span>
-                      )}
+                      {' @ '}
+                      <span className="text-chart-home">
+                        {similar.home_team}
+                      </span>
                     </div>
                     <div className="text-sm text-text-tertiary">{similar.date}</div>
                   </div>
@@ -165,10 +165,17 @@ export default function GameDetailPage({
                   </div>
                 </div>
 
-                {/* Price history chart placeholder */}
-                <div className="h-64 bg-bg-tertiary rounded-lg flex items-center justify-center text-text-tertiary">
-                  Chart: {similar.price_history.length} price points
-                </div>
+                {/* Price history chart */}
+                <PriceHistoryChart
+                  priceHistory={similar.price_history}
+                  metadata={similar.market_metadata}
+                  awayTeam={similar.away_team}
+                  homeTeam={similar.home_team}
+                  targetAwayTeam={target_game.away_team}
+                  targetHomeTeam={target_game.home_team}
+                  awayCorrespondsTo={similar.current_away_corresponds_to}
+                  homeCorrespondsTo={similar.current_home_corresponds_to}
+                />
               </div>
             ))}
           </div>

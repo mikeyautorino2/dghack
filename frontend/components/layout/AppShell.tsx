@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -9,6 +9,14 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentSport = searchParams.get('sport');
+
+  // Determine active tab based on URL
+  const isHomePage = pathname === '/';
+  const activeTab = isHomePage
+    ? (currentSport?.toUpperCase() || 'NBA') // Default to NBA on homepage
+    : null;
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary">
@@ -17,29 +25,20 @@ export function AppShell({ children }: AppShellProps) {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/" className="text-xl font-semibold tracking-tight hover:text-text-secondary transition-colors">
-              Betting Analytics
+              degenstock
             </Link>
 
-            {/* Sport filter tabs */}
-            <div className="flex gap-2">
-              <TabButton href="/" active={pathname === '/'}>
-                All
-              </TabButton>
-              <TabButton href="/?sport=NBA" active={pathname === '/' && false}>
-                NBA
-              </TabButton>
-              <TabButton href="/?sport=NFL" active={pathname === '/' && false}>
-                NFL
-              </TabButton>
-            </div>
-          </div>
-
-          {/* Live indicator */}
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-accent-home rounded-full animate-pulse" />
-            <span className="text-sm text-text-tertiary">
-              Live Prices
-            </span>
+            {/* Sport filter tabs - only show on homepage */}
+            {isHomePage && (
+              <div className="flex gap-2">
+                <TabButton href="/?sport=NBA" active={activeTab === 'NBA'}>
+                  NBA
+                </TabButton>
+                <TabButton href="/?sport=NFL" active={activeTab === 'NFL'}>
+                  NFL
+                </TabButton>
+              </div>
+            )}
           </div>
         </div>
       </nav>

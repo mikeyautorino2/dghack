@@ -17,6 +17,11 @@ var _s = __turbopack_context__.k.signature();
 function AppShell({ children }) {
     _s();
     const pathname = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["usePathname"])();
+    const searchParams = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSearchParams"])();
+    const currentSport = searchParams.get('sport');
+    // Determine active tab based on URL
+    const isHomePage = pathname === '/';
+    const activeTab = isHomePage ? currentSport?.toUpperCase() || 'NFL' : null;
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "min-h-screen bg-bg-primary text-text-primary",
         children: [
@@ -34,49 +39,40 @@ function AppShell({ children }) {
                                     children: "Betting Analytics"
                                 }, void 0, false, {
                                     fileName: "[project]/components/layout/AppShell.tsx",
-                                    lineNumber: 19,
+                                    lineNumber: 27,
                                     columnNumber: 13
                                 }, this),
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                isHomePage && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     className: "flex gap-2",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(TabButton, {
-                                            href: "/",
-                                            active: pathname === '/',
-                                            children: "All"
-                                        }, void 0, false, {
-                                            fileName: "[project]/components/layout/AppShell.tsx",
-                                            lineNumber: 25,
-                                            columnNumber: 15
-                                        }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(TabButton, {
                                             href: "/?sport=NBA",
-                                            active: pathname === '/' && false,
+                                            active: activeTab === 'NBA',
                                             children: "NBA"
                                         }, void 0, false, {
                                             fileName: "[project]/components/layout/AppShell.tsx",
-                                            lineNumber: 28,
-                                            columnNumber: 15
+                                            lineNumber: 34,
+                                            columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(TabButton, {
                                             href: "/?sport=NFL",
-                                            active: pathname === '/' && false,
+                                            active: activeTab === 'NFL',
                                             children: "NFL"
                                         }, void 0, false, {
                                             fileName: "[project]/components/layout/AppShell.tsx",
-                                            lineNumber: 31,
-                                            columnNumber: 15
+                                            lineNumber: 37,
+                                            columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/components/layout/AppShell.tsx",
-                                    lineNumber: 24,
-                                    columnNumber: 13
+                                    lineNumber: 33,
+                                    columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/layout/AppShell.tsx",
-                            lineNumber: 18,
+                            lineNumber: 26,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -86,7 +82,7 @@ function AppShell({ children }) {
                                     className: "w-2 h-2 bg-accent-home rounded-full animate-pulse"
                                 }, void 0, false, {
                                     fileName: "[project]/components/layout/AppShell.tsx",
-                                    lineNumber: 39,
+                                    lineNumber: 46,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -94,24 +90,24 @@ function AppShell({ children }) {
                                     children: "Live Prices"
                                 }, void 0, false, {
                                     fileName: "[project]/components/layout/AppShell.tsx",
-                                    lineNumber: 40,
+                                    lineNumber: 47,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/layout/AppShell.tsx",
-                            lineNumber: 38,
+                            lineNumber: 45,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/components/layout/AppShell.tsx",
-                    lineNumber: 17,
+                    lineNumber: 25,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/layout/AppShell.tsx",
-                lineNumber: 16,
+                lineNumber: 24,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("main", {
@@ -119,19 +115,20 @@ function AppShell({ children }) {
                 children: children
             }, void 0, false, {
                 fileName: "[project]/components/layout/AppShell.tsx",
-                lineNumber: 48,
+                lineNumber: 55,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/components/layout/AppShell.tsx",
-        lineNumber: 14,
+        lineNumber: 22,
         columnNumber: 5
     }, this);
 }
-_s(AppShell, "xbyQPtUVMO7MNj7WjJlpdWqRcTo=", false, function() {
+_s(AppShell, "AxA9T5G2Po78UC4hL8ljCdvMciE=", false, function() {
     return [
-        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["usePathname"]
+        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["usePathname"],
+        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useSearchParams"]
     ];
 });
 _c = AppShell;
@@ -145,7 +142,7 @@ function TabButton({ href, active, children }) {
         children: children
     }, void 0, false, {
         fileName: "[project]/components/layout/AppShell.tsx",
-        lineNumber: 65,
+        lineNumber: 72,
         columnNumber: 5
     }, this);
 }
@@ -215,17 +212,17 @@ function GameDetailPage({ params }) {
                     className: "animate-spin w-8 h-8 border-2 border-accent-primary border-t-transparent rounded-full"
                 }, void 0, false, {
                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                    lineNumber: 50,
+                    lineNumber: 51,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                lineNumber: 49,
+                lineNumber: 50,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-            lineNumber: 48,
+            lineNumber: 49,
             columnNumber: 7
         }, this);
     }
@@ -239,7 +236,7 @@ function GameDetailPage({ params }) {
                         children: "⚠️"
                     }, void 0, false, {
                         fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                        lineNumber: 60,
+                        lineNumber: 61,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
@@ -247,7 +244,7 @@ function GameDetailPage({ params }) {
                         children: "Error loading game analysis"
                     }, void 0, false, {
                         fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                        lineNumber: 61,
+                        lineNumber: 62,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -255,18 +252,18 @@ function GameDetailPage({ params }) {
                         children: error
                     }, void 0, false, {
                         fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                        lineNumber: 62,
+                        lineNumber: 63,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                lineNumber: 59,
+                lineNumber: 60,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-            lineNumber: 58,
+            lineNumber: 59,
             columnNumber: 7
         }, this);
     }
@@ -279,17 +276,17 @@ function GameDetailPage({ params }) {
                     children: "Game not found"
                 }, void 0, false, {
                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                    lineNumber: 72,
+                    lineNumber: 73,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                lineNumber: 71,
+                lineNumber: 72,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-            lineNumber: 70,
+            lineNumber: 71,
             columnNumber: 7
         }, this);
     }
@@ -308,12 +305,12 @@ function GameDetailPage({ params }) {
                                 children: target_game.sport
                             }, void 0, false, {
                                 fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                lineNumber: 86,
+                                lineNumber: 87,
                                 columnNumber: 13
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                            lineNumber: 85,
+                            lineNumber: 86,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -326,7 +323,7 @@ function GameDetailPage({ params }) {
                                             children: "Away"
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 93,
+                                            lineNumber: 94,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -334,13 +331,13 @@ function GameDetailPage({ params }) {
                                             children: target_game.away_team
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 96,
+                                            lineNumber: 97,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                    lineNumber: 92,
+                                    lineNumber: 93,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -350,7 +347,7 @@ function GameDetailPage({ params }) {
                                             children: "Home"
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 101,
+                                            lineNumber: 102,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -358,25 +355,25 @@ function GameDetailPage({ params }) {
                                             children: target_game.home_team
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 104,
+                                            lineNumber: 105,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                    lineNumber: 100,
+                                    lineNumber: 101,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                            lineNumber: 91,
+                            lineNumber: 92,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                    lineNumber: 84,
+                    lineNumber: 85,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -395,7 +392,7 @@ function GameDetailPage({ params }) {
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 115,
+                                            lineNumber: 116,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -403,13 +400,13 @@ function GameDetailPage({ params }) {
                                             children: "Based on cumulative team statistics using K-Nearest Neighbors"
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 118,
+                                            lineNumber: 119,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                    lineNumber: 114,
+                                    lineNumber: 115,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
@@ -422,7 +419,7 @@ function GameDetailPage({ params }) {
                                             children: "Top 3"
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 128,
+                                            lineNumber: 129,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -430,7 +427,7 @@ function GameDetailPage({ params }) {
                                             children: "Top 5"
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 129,
+                                            lineNumber: 130,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -438,19 +435,19 @@ function GameDetailPage({ params }) {
                                             children: "Top 10"
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 130,
+                                            lineNumber: 131,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                    lineNumber: 123,
+                                    lineNumber: 124,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                            lineNumber: 113,
+                            lineNumber: 114,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -466,7 +463,7 @@ function GameDetailPage({ params }) {
                                                     children: idx + 1
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                    lineNumber: 142,
+                                                    lineNumber: 143,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -484,7 +481,7 @@ function GameDetailPage({ params }) {
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                                    lineNumber: 147,
+                                                                    lineNumber: 148,
                                                                     columnNumber: 23
                                                                 }, this),
                                                                 similar.mapping === 'flipped' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -492,13 +489,13 @@ function GameDetailPage({ params }) {
                                                                     children: "Teams flipped"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                                    lineNumber: 151,
+                                                                    lineNumber: 152,
                                                                     columnNumber: 25
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                            lineNumber: 146,
+                                                            lineNumber: 147,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -506,13 +503,13 @@ function GameDetailPage({ params }) {
                                                             children: similar.date
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                            lineNumber: 156,
+                                                            lineNumber: 157,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                    lineNumber: 145,
+                                                    lineNumber: 146,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -523,7 +520,7 @@ function GameDetailPage({ params }) {
                                                             children: "Similarity"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                            lineNumber: 159,
+                                                            lineNumber: 160,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -534,19 +531,19 @@ function GameDetailPage({ params }) {
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                            lineNumber: 162,
+                                                            lineNumber: 163,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                    lineNumber: 158,
+                                                    lineNumber: 159,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 141,
+                                            lineNumber: 142,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -558,35 +555,35 @@ function GameDetailPage({ params }) {
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 169,
+                                            lineNumber: 170,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, similar.game_id, true, {
                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                    lineNumber: 137,
+                                    lineNumber: 138,
                                     columnNumber: 15
                                 }, this))
                         }, void 0, false, {
                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                            lineNumber: 135,
+                            lineNumber: 136,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                    lineNumber: 112,
+                    lineNumber: 113,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-            lineNumber: 82,
+            lineNumber: 83,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-        lineNumber: 81,
+        lineNumber: 82,
         columnNumber: 5
     }, this);
 }

@@ -295,7 +295,8 @@ async def check_market_exists(
         - polymarket_slug (str): URL slug if exists
         - game_start_ts (datetime): Game start time if exists
         - market_open_ts (datetime): Market open time if exists
-        - market_close_ts (datetime): Market close time if exists
+        - market_close_ts (datetime or None): Market close time if available
+            Uses closedTime (precise) for historical markets, endDate (less precise) for active markets
 
     Or returns dict with exists=False if market doesn't exist.
     """
@@ -318,7 +319,17 @@ async def check_market_exists(
                 market_id = data.get("id", slug)
                 start_date = datetime.fromisoformat(data["gameStartTime"].replace("Z", "+00:00"))
                 market_open = datetime.fromisoformat(data["createdAt"].replace("Z", "+00:00")) # startDate
-                market_close = datetime.fromisoformat(data["closedTime"].replace("Z", "+00:00")) # endDate
+
+                # Try closedTime first (accurate for historical), fallback to endDate (for active markets)
+                try:
+                    market_close = datetime.fromisoformat(data["closedTime"].replace("Z", "+00:00"))
+                except KeyError:
+                    # Active market - use endDate as fallback (less precise but better than nothing)
+                    try:
+                        market_close = datetime.fromisoformat(data["endDate"].replace("Z", "+00:00"))
+                    except KeyError:
+                        # No close time available at all
+                        market_close = None
 
                 return {
                     "exists": True,
@@ -326,7 +337,7 @@ async def check_market_exists(
                     "polymarket_slug": slug,
                     "game_start_ts": start_date,
                     "market_open_ts": market_open,
-                    "market_close_ts": market_close
+                    "market_close_ts": market_close  # Can be None for active markets
                 }
             except Exception:
                 # If normal order failed, try reversed

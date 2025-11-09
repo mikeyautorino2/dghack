@@ -112,12 +112,13 @@ def prepare_nba_df_for_db(df: pd.DataFrame) -> pd.DataFrame:
 def insert_nba_games(df: pd.DataFrame) -> int:
     """
     Insert NBA games DataFrame into database.
+    Automatically filters out games that already exist (by game_id).
 
     Args:
         df: DataFrame from basketball_api.get_matchups_cumulative_stats_between()
 
     Returns:
-        Number of rows inserted
+        Number of new rows inserted (excludes duplicates)
 
     Raises:
         Exception: If insertion fails
@@ -126,8 +127,23 @@ def insert_nba_games(df: pd.DataFrame) -> int:
 
     session = SessionLocal()
     try:
+        # Query existing game_ids to filter out duplicates
+        existing_ids = session.query(NBAGameFeatures.game_id).all()
+        existing_ids_set = {g[0] for g in existing_ids}
+
+        # Filter out games that already exist
+        df_new = df_prepared[~df_prepared['game_id'].isin(existing_ids_set)]
+
+        duplicates_count = len(df_prepared) - len(df_new)
+        if duplicates_count > 0:
+            print(f"  Skipping {duplicates_count} games that already exist in database")
+
+        if len(df_new) == 0:
+            print("  No new games to insert")
+            return 0
+
         # Use pandas to_sql for efficient bulk insert
-        rows_inserted = df_prepared.to_sql(
+        rows_inserted = df_new.to_sql(
             'nba_games_features',
             engine,
             if_exists='append',
@@ -135,7 +151,7 @@ def insert_nba_games(df: pd.DataFrame) -> int:
             method='multi'  # Use multi-row INSERT for better performance
         )
         session.commit()
-        return rows_inserted if rows_inserted else len(df_prepared)
+        return rows_inserted if rows_inserted else len(df_new)
     except Exception as e:
         session.rollback()
         raise e
@@ -174,12 +190,13 @@ def prepare_nfl_df_for_db(df: pd.DataFrame) -> pd.DataFrame:
 def insert_nfl_games(df: pd.DataFrame) -> int:
     """
     Insert NFL games DataFrame into database.
+    Automatically filters out games that already exist (by game_id).
 
     Args:
         df: DataFrame from football_api.get_historical_data_sync()
 
     Returns:
-        Number of rows inserted
+        Number of new rows inserted (excludes duplicates)
 
     Raises:
         Exception: If insertion fails
@@ -188,8 +205,23 @@ def insert_nfl_games(df: pd.DataFrame) -> int:
 
     session = SessionLocal()
     try:
+        # Query existing game_ids to filter out duplicates
+        existing_ids = session.query(NFLGameFeatures.game_id).all()
+        existing_ids_set = {g[0] for g in existing_ids}
+
+        # Filter out games that already exist
+        df_new = df_prepared[~df_prepared['game_id'].isin(existing_ids_set)]
+
+        duplicates_count = len(df_prepared) - len(df_new)
+        if duplicates_count > 0:
+            print(f"  Skipping {duplicates_count} games that already exist in database")
+
+        if len(df_new) == 0:
+            print("  No new games to insert")
+            return 0
+
         # Use pandas to_sql for efficient bulk insert
-        rows_inserted = df_prepared.to_sql(
+        rows_inserted = df_new.to_sql(
             'nfl_games_features',
             engine,
             if_exists='append',
@@ -197,7 +229,7 @@ def insert_nfl_games(df: pd.DataFrame) -> int:
             method='multi'  # Use multi-row INSERT for better performance
         )
         session.commit()
-        return rows_inserted if rows_inserted else len(df_prepared)
+        return rows_inserted if rows_inserted else len(df_new)
     except Exception as e:
         session.rollback()
         raise e
@@ -294,12 +326,13 @@ def prepare_mlb_df_for_db(df: pd.DataFrame) -> pd.DataFrame:
 def insert_mlb_games(df: pd.DataFrame) -> int:
     """
     Insert MLB games DataFrame into database.
+    Automatically filters out games that already exist (by game_id).
 
     Args:
         df: DataFrame from baseball_api.get_historical_data_sync()
 
     Returns:
-        Number of rows inserted
+        Number of new rows inserted (excludes duplicates)
 
     Raises:
         Exception: If insertion fails
@@ -308,8 +341,23 @@ def insert_mlb_games(df: pd.DataFrame) -> int:
 
     session = SessionLocal()
     try:
+        # Query existing game_ids to filter out duplicates
+        existing_ids = session.query(MLBGameFeatures.game_id).all()
+        existing_ids_set = {g[0] for g in existing_ids}
+
+        # Filter out games that already exist
+        df_new = df_prepared[~df_prepared['game_id'].isin(existing_ids_set)]
+
+        duplicates_count = len(df_prepared) - len(df_new)
+        if duplicates_count > 0:
+            print(f"  Skipping {duplicates_count} games that already exist in database")
+
+        if len(df_new) == 0:
+            print("  No new games to insert")
+            return 0
+
         # Use pandas to_sql for efficient bulk insert
-        rows_inserted = df_prepared.to_sql(
+        rows_inserted = df_new.to_sql(
             'mlb_games_features',
             engine,
             if_exists='append',
@@ -317,7 +365,7 @@ def insert_mlb_games(df: pd.DataFrame) -> int:
             method='multi'  # Use multi-row INSERT for better performance
         )
         session.commit()
-        return rows_inserted if rows_inserted else len(df_prepared)
+        return rows_inserted if rows_inserted else len(df_new)
     except Exception as e:
         session.rollback()
         raise e

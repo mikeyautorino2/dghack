@@ -82,9 +82,9 @@ class NBAGameFeatures(Base):
     # Polymarket Data
     polymarket_home_price = Column(Float)
     polymarket_away_price = Column(Float)
-    polymarket_start_ts = Column(DateTime)
-    polymarket_market_open_ts = Column(DateTime)
-    polymarket_market_close_ts = Column(DateTime)
+    polymarket_start_ts = Column(Integer)
+    polymarket_market_open_ts = Column(Integer)
+    polymarket_market_close_ts = Column(Integer)
 
 
 def prepare_nba_df_for_db(df: pd.DataFrame) -> pd.DataFrame:
@@ -94,8 +94,7 @@ def prepare_nba_df_for_db(df: pd.DataFrame) -> pd.DataFrame:
     Transformations:
     - Add 'sport' column with value 'NBA'
     - Add 'season' column (start year of NBA season)
-    - Convert Unix timestamps to DateTime objects (polymarket_start_ts,
-      polymarket_market_open_ts, polymarket_market_close_ts)
+    - Unix timestamps are stored as-is (integers)
 
     Args:
         df: DataFrame from basketball_api.get_matchups_cumulative_stats_between()
@@ -116,25 +115,7 @@ def prepare_nba_df_for_db(df: pd.DataFrame) -> pd.DataFrame:
         lambda d: d.year if d.month >= 10 else d.year - 1
     )
 
-    # Convert Unix timestamps to datetime (handle None/NaN values)
-    if 'polymarket_start_ts' in df_copy.columns:
-        df_copy['polymarket_start_ts'] = pd.to_datetime(
-            df_copy['polymarket_start_ts'],
-            unit='s',
-            errors='coerce'
-        )
-    if 'polymarket_market_open_ts' in df_copy.columns:
-        df_copy['polymarket_market_open_ts'] = pd.to_datetime(
-            df_copy['polymarket_market_open_ts'],
-            unit='s',
-            errors='coerce'
-        )
-    if 'polymarket_market_close_ts' in df_copy.columns:
-        df_copy['polymarket_market_close_ts'] = pd.to_datetime(
-            df_copy['polymarket_market_close_ts'],
-            unit='s',
-            errors='coerce'
-        )
+    # Unix timestamps are stored as-is (no conversion needed)
 
     return df_copy
 
@@ -180,8 +161,7 @@ def prepare_nfl_df_for_db(df: pd.DataFrame) -> pd.DataFrame:
     Transformations:
     - Add 'sport' column with value 'NFL'
     - Add 'season' column (extracted from year)
-    - Convert Unix timestamps to DateTime objects (polymarket_start_ts,
-      polymarket_market_open_ts, polymarket_market_close_ts)
+    - Unix timestamps are stored as-is (integers)
 
     Args:
         df: DataFrame from football_api.get_historical_data_sync()
@@ -197,25 +177,7 @@ def prepare_nfl_df_for_db(df: pd.DataFrame) -> pd.DataFrame:
     # Add season column (same as year for NFL)
     df_copy['season'] = df_copy['year']
 
-    # Convert Unix timestamps to datetime (handle None/NaN values)
-    if 'polymarket_start_ts' in df_copy.columns:
-        df_copy['polymarket_start_ts'] = pd.to_datetime(
-            df_copy['polymarket_start_ts'],
-            unit='s',
-            errors='coerce'
-        )
-    if 'polymarket_market_open_ts' in df_copy.columns:
-        df_copy['polymarket_market_open_ts'] = pd.to_datetime(
-            df_copy['polymarket_market_open_ts'],
-            unit='s',
-            errors='coerce'
-        )
-    if 'polymarket_market_close_ts' in df_copy.columns:
-        df_copy['polymarket_market_close_ts'] = pd.to_datetime(
-            df_copy['polymarket_market_close_ts'],
-            unit='s',
-            errors='coerce'
-        )
+    # Unix timestamps are stored as-is (no conversion needed)
 
     return df_copy
 
@@ -303,9 +265,9 @@ class NFLGameFeatures(Base):
     # Polymarket Data
     polymarket_away_price = Column(Float)
     polymarket_home_price = Column(Float)
-    polymarket_start_ts = Column(DateTime)
-    polymarket_market_open_ts = Column(DateTime)
-    polymarket_market_close_ts = Column(DateTime)
+    polymarket_start_ts = Column(Integer)
+    polymarket_market_open_ts = Column(Integer)
+    polymarket_market_close_ts = Column(Integer)
 
 
 def prepare_mlb_df_for_db(df: pd.DataFrame) -> pd.DataFrame:
@@ -315,9 +277,8 @@ def prepare_mlb_df_for_db(df: pd.DataFrame) -> pd.DataFrame:
     Transformations:
     - Add 'sport' column with value 'MLB'
     - Add 'season' column (year from game_date)
-    - Convert Unix timestamps to DateTime objects (polymarket_start_ts,
-      polymarket_market_open_ts, polymarket_market_close_ts)
     - Convert game_id to string if needed
+    - Unix timestamps are stored as-is (integers)
 
     Args:
         df: DataFrame from baseball_api.get_historical_data_sync()
@@ -336,25 +297,7 @@ def prepare_mlb_df_for_db(df: pd.DataFrame) -> pd.DataFrame:
     # Convert game_id to string (MLB API returns int)
     df_copy['game_id'] = df_copy['game_id'].astype(str)
 
-    # Convert Unix timestamps to datetime (handle None/NaN values)
-    if 'polymarket_start_ts' in df_copy.columns:
-        df_copy['polymarket_start_ts'] = pd.to_datetime(
-            df_copy['polymarket_start_ts'],
-            unit='s',
-            errors='coerce'
-        )
-    if 'polymarket_market_open_ts' in df_copy.columns:
-        df_copy['polymarket_market_open_ts'] = pd.to_datetime(
-            df_copy['polymarket_market_open_ts'],
-            unit='s',
-            errors='coerce'
-        )
-    if 'polymarket_market_close_ts' in df_copy.columns:
-        df_copy['polymarket_market_close_ts'] = pd.to_datetime(
-            df_copy['polymarket_market_close_ts'],
-            unit='s',
-            errors='coerce'
-        )
+    # Unix timestamps are stored as-is (no conversion needed)
 
     return df_copy
 
@@ -462,9 +405,9 @@ class MLBGameFeatures(Base):
     # Polymarket Data
     polymarket_away_price = Column(Float)
     polymarket_home_price = Column(Float)
-    polymarket_start_ts = Column(DateTime)
-    polymarket_market_open_ts = Column(DateTime)
-    polymarket_market_close_ts = Column(DateTime)
+    polymarket_start_ts = Column(Integer)
+    polymarket_market_open_ts = Column(Integer)
+    polymarket_market_close_ts = Column(Integer)
 
 
 class ActiveMarket(Base):
@@ -490,14 +433,14 @@ class ActiveMarket(Base):
     home_team = Column(String, nullable=False)
     home_team_id = Column(String, nullable=True)
 
-    # Timing
-    game_start_ts = Column(DateTime, nullable=False)  # When the game starts
-    market_open_ts = Column(DateTime, nullable=True)  # When market opened for trading
-    market_close_ts = Column(DateTime, nullable=True)  # When market closed
+    # Timing (Unix timestamps)
+    game_start_ts = Column(Integer, nullable=False)  # When the game starts
+    market_open_ts = Column(Integer, nullable=True)  # When market opened for trading
+    market_close_ts = Column(Integer, nullable=True)  # When market closed
 
     # Status tracking
     market_status = Column(String, nullable=False, default='open')  # 'open', 'closed', 'resolved'
-    last_updated = Column(DateTime, nullable=False)  # Last time we fetched a price for this market
+    last_updated = Column(Integer, nullable=False)  # Last time we fetched a price for this market (Unix timestamp)
 
     # Metadata
     created_at = Column(DateTime, nullable=False)  # When we first discovered this market
@@ -518,7 +461,7 @@ class MarketPriceHistory(Base):
     market_id = Column(String, nullable=False, index=True)  # References ActiveMarket.market_id
 
     # Price snapshot
-    timestamp = Column(DateTime, nullable=False, index=True)  # When this price was observed
+    timestamp = Column(Integer, nullable=False, index=True)  # When this price was observed (Unix timestamp)
     away_price = Column(Float, nullable=False)  # Away team win probability (0-1)
     home_price = Column(Float, nullable=False)  # Home team win probability (0-1)
     mid_price = Column(Float, nullable=False)  # (away_price + home_price) / 2
@@ -541,9 +484,9 @@ def insert_active_markets(markets: list[dict]) -> int:
             - away_team_id (str, optional)
             - home_team (str)
             - home_team_id (str, optional)
-            - game_start_ts (datetime)
-            - market_open_ts (datetime, optional)
-            - market_close_ts (datetime, optional)
+            - game_start_ts (int): Unix timestamp
+            - market_open_ts (int, optional): Unix timestamp
+            - market_close_ts (int, optional): Unix timestamp
             - market_status (str): default 'open'
 
     Returns:
@@ -562,7 +505,9 @@ def insert_active_markets(markets: list[dict]) -> int:
             ).first()
 
             if not existing:
-                now = datetime.utcnow()
+                now_datetime = datetime.utcnow()
+                now_timestamp = int(now_datetime.timestamp())
+
                 market = ActiveMarket(
                     market_id=market_data['market_id'],
                     polymarket_slug=market_data['polymarket_slug'],
@@ -576,8 +521,8 @@ def insert_active_markets(markets: list[dict]) -> int:
                     market_open_ts=market_data.get('market_open_ts'),
                     market_close_ts=market_data.get('market_close_ts'),
                     market_status=market_data.get('market_status', 'open'),
-                    last_updated=now,
-                    created_at=now
+                    last_updated=now_timestamp,
+                    created_at=now_datetime
                 )
                 session.add(market)
                 inserted_count += 1
@@ -591,13 +536,13 @@ def insert_active_markets(markets: list[dict]) -> int:
         session.close()
 
 
-def insert_price_snapshot(market_id: str, timestamp, away_price: float, home_price: float) -> bool:
+def insert_price_snapshot(market_id: str, timestamp: int, away_price: float, home_price: float) -> bool:
     """
     Insert a single price snapshot for a market.
 
     Args:
         market_id: Polymarket market ID
-        timestamp: datetime when price was observed
+        timestamp: Unix timestamp when price was observed
         away_price: Away team price (0-1)
         home_price: Home team price (0-1)
 
@@ -623,7 +568,7 @@ def insert_price_snapshot(market_id: str, timestamp, away_price: float, home_pri
         # Update last_updated in ActiveMarket
         market = session.query(ActiveMarket).filter_by(market_id=market_id).first()
         if market:
-            market.last_updated = datetime.utcnow()
+            market.last_updated = int(datetime.utcnow().timestamp())
 
         session.commit()
         return True
@@ -643,7 +588,9 @@ def get_active_markets(status: str = 'open') -> list[dict]:
         status: Filter by market status ('open', 'closed', 'resolved'). Default 'open'.
 
     Returns:
-        List of market dicts with all fields from ActiveMarket table
+        List of market dicts with all fields from ActiveMarket table.
+        Note: game_start_ts, market_open_ts, market_close_ts, and last_updated are Unix timestamps (int).
+        created_at is a datetime object.
     """
     session = SessionLocal()
 

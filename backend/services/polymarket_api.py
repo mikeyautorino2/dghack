@@ -250,8 +250,8 @@ async def check_market_exists(
                 # If we got here, market exists
                 market_id = data.get("id", slug)
                 start_date = datetime.fromisoformat(data["gameStartTime"].replace("Z", "+00:00"))
-                market_open = datetime.fromisoformat(data["startDate"].replace("Z", "+00:00"))
-                market_close = datetime.fromisoformat(data["endDate"].replace("Z", "+00:00"))
+                market_open = datetime.fromisoformat(data["createdAt"].replace("Z", "+00:00")) # startDate
+                market_close = datetime.fromisoformat(data["closedTime"].replace("Z", "+00:00")) # endDate
 
                 return {
                     "exists": True,

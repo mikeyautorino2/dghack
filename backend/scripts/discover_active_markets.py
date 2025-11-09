@@ -2,7 +2,7 @@
 """
 Market Discovery Service
 
-Discovers upcoming NBA and NFL games and checks if Polymarket markets exist for them.
+Discovers upcoming NFL games and checks if Polymarket markets exist for them.
 Stores active markets in the database for continuous price tracking.
 
 Run frequency: Every 6 hours via cron
@@ -19,6 +19,7 @@ import asyncio
 import aiohttp
 from datetime import datetime, timedelta, date
 from zoneinfo import ZoneInfo
+from sqlalchemy import text
 
 # Import service APIs
 from backend.services import polymarket_api
@@ -26,7 +27,54 @@ from backend.services.football_api import TEAM_ID_MAP as NFL_TEAM_MAP
 from backend.app import db
 
 
-async def discover_nfl_markets(session: aiohttp.ClientSession, days_ahead: int = 30) -> list[dict]:
+# ============================================================================
+# DATABASE CONNECTION TEST
+# ============================================================================
+
+def test_database_connection():
+    """Test database connection before starting discovery."""
+    print("\n" + "=" * 60)
+    print("DATABASE CONNECTION TEST")
+    print("=" * 60)
+
+    try:
+        # Test connection with a simple query
+        with db.engine.connect() as conn:
+            result = conn.execute(text("SELECT 1"))
+            result.fetchone()
+
+        # Get database URL for display (hide password)
+        db_url = str(db.engine.url)
+        if '@' in db_url and ':' in db_url:
+            # Format: postgresql://user:password@host:port/database
+            parts = db_url.split('@')
+            user_part = parts[0].split(':')[0]  # Get user without password
+            host_part = '@'.join(parts[1:])
+            display_url = f"{user_part}:****@{host_part}"
+        else:
+            display_url = db_url
+
+        print(f"✓ Successfully connected to database")
+        print(f"  URL: {display_url}")
+        print("=" * 60 + "\n")
+        return True
+
+    except Exception as e:
+        print(f"✗ Failed to connect to database")
+        print(f"  Error: {e}")
+        print("\nPlease check:")
+        print("  1. PostgreSQL is running")
+        print("  2. DATABASE_URL in .env is correct")
+        print("  3. Database exists and user has access")
+        print("=" * 60 + "\n")
+        return False
+
+
+# ============================================================================
+# MARKET DISCOVERY
+# ============================================================================
+
+async def discover_nfl_markets(session: aiohttp.ClientSession, days_ahead: int = 10) -> list[dict]:
     """
     Discover upcoming NFL games and check for Polymarket markets.
 
@@ -137,133 +185,6 @@ async def discover_nfl_markets(session: aiohttp.ClientSession, days_ahead: int =
     return markets
 
 
-async def discover_nba_markets(session: aiohttp.ClientSession, days_ahead: int = 30) -> list[dict]:
-    """
-    Discover upcoming NBA games and check for Polymarket markets.
-
-    Args:
-        session: aiohttp session
-        days_ahead: How many days ahead to look for games
-
-    Returns:
-        List of market dicts ready for insertion
-    """
-    print("Discovering NBA markets...")
-    markets = []
-
-    try:
-        from nba_api.stats.static import teams
-        from nba_api.stats.endpoints import leaguegamefinder
-        import time
-
-        # Get all NBA teams
-        nba_teams = teams.get_teams()
-        team_dict = {team['id']: team for team in nba_teams}
-
-        # Get current season (e.g., "2024-25")
-        today = datetime.now(ZoneInfo("America/New_York"))
-        if today.month >= 10:  # Oct-Dec
-            season_year = today.year
-        else:  # Jan-Sep
-            season_year = today.year - 1
-
-        season = f"{season_year}-{str(season_year + 1)[-2:]}"
-
-        # Query NBA API for upcoming games (use schedule endpoint or web scraping)
-        # Note: nba_api doesn't have a great "future games" endpoint
-        # Alternative: scrape from ESPN or NBA.com
-
-        # For now, use ESPN NBA API as fallback
-        end_date = (today + timedelta(days=days_ahead)).date()
-        current_date = today.date()
-
-        while current_date <= end_date:
-            date_str = current_date.strftime("%Y%m%d")
-            url = f"https://cdn.espn.com/core/nba/schedule?xhr=1&date={date_str}"
-
-            try:
-                await asyncio.sleep(0.5)  # Rate limit
-                async with session.get(url) as response:
-                    if response.status != 200:
-                        current_date += timedelta(days=1)
-                        continue
-
-                    data = await response.json()
-                    events = data.get("content", {}).get("schedule", {}).values()
-
-                    for date_data in events:
-                        games = date_data.get("games", [])
-
-                        for game in games:
-                            try:
-                                event_id = game.get("id")
-                                competition = game.get("competitions", [{}])[0]
-                                competitors = competition.get("competitors", [])
-
-                                home_team = next((c for c in competitors if c.get("homeAway") == "home"), None)
-                                away_team = next((c for c in competitors if c.get("homeAway") == "away"), None)
-
-                                if not home_team or not away_team:
-                                    continue
-
-                                # Parse game date
-                                game_date_str = game.get("date")
-                                game_datetime_utc = datetime.fromisoformat(game_date_str.replace("Z", "+00:00"))
-                                game_date = game_datetime_utc.date()
-
-                                away_name = away_team.get("team", {}).get("displayName", "")
-                                home_name = home_team.get("team", {}).get("displayName", "")
-
-                                # Convert to Polymarket abbreviations (lowercase)
-                                # This is a simplified mapping - may need refinement
-                                away_abbrev = away_team.get("team", {}).get("abbreviation", "").lower()
-                                home_abbrev = home_team.get("team", {}).get("abbreviation", "").lower()
-
-                                if not away_abbrev or not home_abbrev:
-                                    continue
-
-                                # Check if Polymarket market exists
-                                market_info = await polymarket_api.check_market_exists(
-                                    session,
-                                    sport="nba",
-                                    date=game_date,
-                                    away_team=away_abbrev,
-                                    home_team=home_abbrev
-                                )
-
-                                if market_info.get("exists"):
-                                    markets.append({
-                                        "market_id": market_info["market_id"],
-                                        "polymarket_slug": market_info["polymarket_slug"],
-                                        "sport": "NBA",
-                                        "game_date": game_date,
-                                        "away_team": away_name,
-                                        "away_team_id": away_team.get("id"),
-                                        "home_team": home_name,
-                                        "home_team_id": home_team.get("id"),
-                                        "game_start_ts": market_info["game_start_ts"],
-                                        "market_open_ts": market_info.get("market_open_ts"),
-                                        "market_close_ts": market_info.get("market_close_ts"),
-                                        "market_status": "open"
-                                    })
-                                    print(f"  Found: {away_abbrev} @ {home_abbrev} on {game_date}")
-
-                            except Exception as e:
-                                print(f"  Error processing NBA game {event_id}: {e}")
-                                continue
-
-            except Exception as e:
-                print(f"  Error fetching NBA games for {current_date}: {e}")
-
-            current_date += timedelta(days=1)
-
-    except ImportError:
-        print("  nba_api not available, skipping NBA discovery")
-
-    print(f"Found {len(markets)} NBA markets")
-    return markets
-
-
 async def cleanup_old_markets():
     """
     Remove markets that have been resolved or are past their game time.
@@ -275,14 +196,14 @@ async def cleanup_old_markets():
 
     session = db.SessionLocal()
     try:
-        now = datetime.now(timezone.utc)
+        now_ts = int(datetime.now(timezone.utc).timestamp())
 
         # Get all open markets
         open_markets = session.query(db.ActiveMarket).filter_by(market_status='open').all()
 
         for market in open_markets:
-            # If game has started and market close time has passed, mark as closed
-            if market.game_start_ts and market.game_start_ts < now:
+            # If game has started, mark as closed
+            if market.game_start_ts and market.game_start_ts < now_ts:
                 # Game has started, mark as closed
                 market.market_status = 'closed'
                 print(f"  Marked as closed: {market.polymarket_slug}")
@@ -300,21 +221,23 @@ async def cleanup_old_markets():
 async def main():
     """Main entry point for market discovery."""
     print("=" * 60)
-    print("Market Discovery Service")
+    print("NFL Market Discovery Service")
     print(f"Started at: {datetime.now()}")
     print("=" * 60)
 
+    # Test database connection first
+    if not test_database_connection():
+        print("✗ Aborting: Cannot connect to database")
+        sys.exit(1)
+
     async with aiohttp.ClientSession() as session:
-        # Discover markets for both sports
-        nfl_markets = await discover_nfl_markets(session, days_ahead=30)
-        nba_markets = await discover_nba_markets(session, days_ahead=30)
+        # Discover NFL markets
+        nfl_markets = await discover_nfl_markets(session, days_ahead=10)
 
-        all_markets = nfl_markets + nba_markets
-
-        if all_markets:
-            print(f"\nInserting {len(all_markets)} markets into database...")
+        if nfl_markets:
+            print(f"\nInserting {len(nfl_markets)} markets into database...")
             try:
-                inserted = db.insert_active_markets(all_markets)
+                inserted = db.insert_active_markets(nfl_markets)
                 print(f"Successfully inserted {inserted} new markets")
             except Exception as e:
                 print(f"Error inserting markets: {e}")

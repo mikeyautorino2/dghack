@@ -446,30 +446,6 @@ class ActiveMarket(Base):
     created_at = Column(DateTime, nullable=False)  # When we first discovered this market
 
 
-class MarketPriceHistory(Base):
-    """
-    Time series of price observations for active markets.
-
-    Stores snapshots of market prices at regular intervals (every 5 minutes) for all
-    active markets. Used to generate candlestick charts and analyze price movements.
-    """
-    __tablename__ = "market_price_history"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
-    # Foreign key to active market
-    market_id = Column(String, nullable=False, index=True)  # References ActiveMarket.market_id
-
-    # Price snapshot
-    timestamp = Column(Integer, nullable=False, index=True)  # When this price was observed (Unix timestamp)
-    away_price = Column(Float, nullable=False)  # Away team win probability (0-1)
-    home_price = Column(Float, nullable=False)  # Home team win probability (0-1)
-    mid_price = Column(Float, nullable=False)  # (away_price + home_price) / 2
-
-    # Optional: Trading volume data if available
-    volume = Column(Float, nullable=True)  # Trading volume at this timestamp
-
-
 def insert_active_markets(markets: list[dict]) -> int:
     """
     Insert newly discovered active markets into the database.
@@ -508,6 +484,14 @@ def insert_active_markets(markets: list[dict]) -> int:
                 now_datetime = datetime.utcnow()
                 now_timestamp = int(now_datetime.timestamp())
 
+                # Helper to ensure timestamps are integers
+                def to_unix_timestamp(val):
+                    if val is None:
+                        return None
+                    if isinstance(val, datetime):
+                        return int(val.timestamp())
+                    return int(val)
+
                 market = ActiveMarket(
                     market_id=market_data['market_id'],
                     polymarket_slug=market_data['polymarket_slug'],
@@ -517,9 +501,9 @@ def insert_active_markets(markets: list[dict]) -> int:
                     away_team_id=market_data.get('away_team_id'),
                     home_team=market_data['home_team'],
                     home_team_id=market_data.get('home_team_id'),
-                    game_start_ts=market_data['game_start_ts'],
-                    market_open_ts=market_data.get('market_open_ts'),
-                    market_close_ts=market_data.get('market_close_ts'),
+                    game_start_ts=to_unix_timestamp(market_data['game_start_ts']),
+                    market_open_ts=to_unix_timestamp(market_data.get('market_open_ts')),
+                    market_close_ts=to_unix_timestamp(market_data.get('market_close_ts')),
                     market_status=market_data.get('market_status', 'open'),
                     last_updated=now_timestamp,
                     created_at=now_datetime
@@ -532,50 +516,6 @@ def insert_active_markets(markets: list[dict]) -> int:
     except Exception as e:
         session.rollback()
         raise e
-    finally:
-        session.close()
-
-
-def insert_price_snapshot(market_id: str, timestamp: int, away_price: float, home_price: float) -> bool:
-    """
-    Insert a single price snapshot for a market.
-
-    Args:
-        market_id: Polymarket market ID
-        timestamp: Unix timestamp when price was observed
-        away_price: Away team price (0-1)
-        home_price: Home team price (0-1)
-
-    Returns:
-        True if inserted successfully, False otherwise
-    """
-    from datetime import datetime
-
-    session = SessionLocal()
-
-    try:
-        mid_price = (away_price + home_price) / 2
-
-        snapshot = MarketPriceHistory(
-            market_id=market_id,
-            timestamp=timestamp,
-            away_price=away_price,
-            home_price=home_price,
-            mid_price=mid_price
-        )
-        session.add(snapshot)
-
-        # Update last_updated in ActiveMarket
-        market = session.query(ActiveMarket).filter_by(market_id=market_id).first()
-        if market:
-            market.last_updated = int(datetime.utcnow().timestamp())
-
-        session.commit()
-        return True
-    except Exception as e:
-        session.rollback()
-        print(f"Error inserting price snapshot for market {market_id}: {e}")
-        return False
     finally:
         session.close()
 

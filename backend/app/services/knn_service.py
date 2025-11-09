@@ -87,6 +87,54 @@ def _flip_features(feature_vals, features):
     return flipped
 
 
+def _determine_mapping(target_vals, similar_vals, features):
+    """
+    Determine if home/away mapping is direct or flipped.
+
+    Compares distances to determine which mapping makes more sense:
+    - Direct: target home ≈ similar home, target away ≈ similar away
+    - Flipped: target home ≈ similar away, target away ≈ similar home
+
+    Args:
+        target_vals: Feature values for target game [home_X, away_X, ...]
+        similar_vals: Feature values for similar game [home_Y, away_Y, ...]
+        features: Feature names ['home_X', 'away_X', ...]
+
+    Returns:
+        dict with mapping info
+    """
+    # Calculate direct mapping distance
+    direct_dist = sum((target_vals[i] - similar_vals[i]) ** 2
+                      for i in range(len(features))) ** 0.5
+
+    # Calculate flipped mapping distance
+    flipped_dist = 0
+    for i, feat in enumerate(features):
+        if feat.startswith('home_'):
+            away_feat = feat.replace('home_', 'away_')
+            away_idx = features.index(away_feat)
+            flipped_dist += (target_vals[i] - similar_vals[away_idx]) ** 2
+        elif feat.startswith('away_'):
+            home_feat = feat.replace('away_', 'home_')
+            home_idx = features.index(home_feat)
+            flipped_dist += (target_vals[i] - similar_vals[home_idx]) ** 2
+    flipped_dist = flipped_dist ** 0.5
+
+    # Choose mapping with smaller distance
+    if direct_dist <= flipped_dist:
+        return {
+            'type': 'direct',
+            'current_home_corresponds_to': 'home',
+            'current_away_corresponds_to': 'away'
+        }
+    else:
+        return {
+            'type': 'flipped',
+            'current_home_corresponds_to': 'away',
+            'current_away_corresponds_to': 'home'
+        }
+
+
 def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_symmetry: bool = False, use_symmetric: bool = True):
     """
     Find K similar games for any sport (cached).
@@ -125,6 +173,9 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
     # Extract target features
     target_vals = [getattr(target, f) for f in features]
 
+    # Store original target features for mapping determination
+    target_vals_original = target_vals.copy()
+
     # Transform if using symmetric mode
     if use_symmetric:
         target_vals = _transform_symmetric_features(target_vals)
@@ -158,16 +209,25 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
         # Map: distance 0 → 100% similarity, distance 2.0 → 0% similarity
         max_reference = 2.0
 
-        # Build results with absolute normalization
+        # Build results with absolute normalization and mapping info
         results = []
         for game, dist in valid_games:
+            # Get similar game features for mapping determination
+            similar_vals = [getattr(game, f) for f in features]
+
+            # Determine team mapping
+            mapping = _determine_mapping(target_vals_original, similar_vals, features)
+
             similarity = 100 * max(0, (1 - dist / max_reference))
             results.append({
                 'game_id': game.game_id,
                 'date': game.game_date,
                 'home': game.home_team,
                 'away': game.away_team,
-                'similarity': round(similarity, 1)
+                'similarity': round(similarity, 1),
+                'mapping': mapping['type'],
+                'current_home_corresponds_to': mapping['current_home_corresponds_to'],
+                'current_away_corresponds_to': mapping['current_away_corresponds_to']
             })
         return results
 
@@ -211,16 +271,25 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
     # Use absolute normalization with fixed reference scale
     max_reference = 2.0
 
-    # Build results with absolute normalization
+    # Build results with absolute normalization and mapping info
     results = []
     for game, dist in valid_games_dict.values():
+        # Get similar game features for mapping determination
+        similar_vals = [getattr(game, f) for f in features]
+
+        # Determine team mapping
+        mapping = _determine_mapping(target_vals_original, similar_vals, features)
+
         similarity = 100 * max(0, (1 - dist / max_reference))
         results.append({
             'game_id': game.game_id,
             'date': game.game_date,
             'home': game.home_team,
             'away': game.away_team,
-            'similarity': round(similarity, 1)
+            'similarity': round(similarity, 1),
+            'mapping': mapping['type'],
+            'current_home_corresponds_to': mapping['current_home_corresponds_to'],
+            'current_away_corresponds_to': mapping['current_away_corresponds_to']
         })
 
     # Sort by similarity and return top k

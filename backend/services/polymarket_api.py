@@ -93,8 +93,8 @@ async def get_opening_price(
                 end_ts = start_ts + 60
 
                 clobIdTokens = json.loads(data["clobTokenIds"])
-                market_open = int(datetime.fromisoformat(data["startDate"].replace("Z", "+00:00")).timestamp())
-                market_close = int(datetime.fromisoformat(data["endDate"].replace("Z", "+00:00")).timestamp())
+                market_open = int(datetime.fromisoformat(data["createdAt"].replace("Z", "+00:00")).timestamp())
+                market_close = int(datetime.fromisoformat(data["closedTime"].replace("Z", "+00:00")).timestamp())
                 queryString = {
                     "market": clobIdTokens[0],
                     "startTs": start_ts,
@@ -326,8 +326,8 @@ async def get_price_history(
 
                 # Extract timestamps
                 game_start_dt = datetime.fromisoformat(data["gameStartTime"].replace("Z", "+00:00"))
-                market_open_dt = datetime.fromisoformat(data["startDate"].replace("Z", "+00:00"))
-                market_close_dt = datetime.fromisoformat(data["endDate"].replace("Z", "+00:00"))
+                market_open_dt = datetime.fromisoformat(data["createdAt"].replace("Z", "+00:00"))
+                market_close_dt = datetime.fromisoformat(data["closedTime"].replace("Z", "+00:00"))
 
                 game_start_ts = int(game_start_dt.timestamp())
                 market_open_ts = int(market_open_dt.timestamp())

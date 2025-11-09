@@ -1,355 +1,493 @@
-"""Fetch cumulative NBA team stats prior to game dates."""
-from __future__ import annotations
-import asyncio
-import time
-from datetime import date, datetime, timedelta
-from typing import Dict, Optional, Union
-
 import aiohttp
+import asyncio
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 import pandas as pd
-import requests
-from nba_api.stats.endpoints import teamgamelog, scoreboardv2
-from nba_api.stats.static import teams as teams_static
+from typing import List, Dict, Optional
+from tqdm.asyncio import tqdm_asyncio
+
 from . import polymarket_api as polyapi
-RATE_LIMIT_SECONDS = 0.6
-REQUEST_TIMEOUT = 30
 
-# Cache team information for fast lookups
-_TEAM_INFO_CACHE = {}
-
-def _get_team_info(team_id: int) -> dict:
-    """Get team info from cache or fetch if not cached."""
-    if not _TEAM_INFO_CACHE:
-        # Populate cache on first call
-        all_teams = teams_static.get_teams()
-        for team in all_teams:
-            _TEAM_INFO_CACHE[team['id']] = team
-    return _TEAM_INFO_CACHE.get(team_id, {})
-MAX_ATTEMPTS = 3
-RETRY_BACKOFF_SECONDS = 5.0
-
-_last_call_ts = 0.0
-_rate_lock = asyncio.Lock()
-_gamelog_cache: Dict[tuple, pd.DataFrame] = {}  # Cache for (team_id, season, season_type) -> full game log
-
-PER_GAME_COLUMNS = [
-    "MIN", "FGM", "FGA", "FG3M", "FG3A", "FTM", "FTA",
-    "OREB", "DREB", "REB", "AST", "STL", "BLK", "TOV", "PF", "PTS",
-]
-
-PERCENT_DEPENDENCIES = {
-    "FG_PCT": ("FGM", "FGA"),
-    "FG3_PCT": ("FG3M", "FG3A"),
-    "FT_PCT": ("FTM", "FTA"),
+# NBA team ID: (Full Name, [Unused], Polymarket Abbreviation)
+TEAM_ID_MAP = {
+    1: ("Atlanta Hawks", "---", "atl"),
+    2: ("Boston Celtics", "---", "bos"),
+    3: ("New Orleans Pelicans", "---", "nop"),
+    4: ("Chicago Bulls", "---", "chi"),
+    5: ("Cleveland Cavaliers", "---", "cle"),
+    6: ("Dallas Mavericks", "---", "dal"),
+    7: ("Denver Nuggets", "---", "den"),
+    8: ("Detroit Pistons", "---", "det"),
+    9: ("Golden State Warriors", "---", "gsw"),
+    10: ("Houston Rockets", "---", "hou"),
+    11: ("Indiana Pacers", "---", "ind"),
+    12: ("LA Clippers", "---", "lac"),
+    13: ("Los Angeles Lakers", "---", "lal"),
+    14: ("Miami Heat", "---", "mia"),
+    15: ("Milwaukee Bucks", "---", "mil"),
+    16: ("Minnesota Timberwolves", "---", "min"),
+    17: ("Brooklyn Nets", "---", "bkn"),
+    18: ("New York Knicks", "---", "nyk"),
+    19: ("Orlando Magic", "---", "orl"),
+    20: ("Philadelphia 76ers", "---", "phi"),
+    21: ("Phoenix Suns", "---", "phx"),
+    22: ("Portland Trail Blazers", "---", "por"),
+    23: ("Sacramento Kings", "---", "sac"),
+    24: ("San Antonio Spurs", "---", "sas"),
+    25: ("Oklahoma City Thunder", "---", "okc"),
+    26: ("Utah Jazz", "---", "uta"),
+    27: ("Washington Wizards", "---", "was"),
+    28: ("Toronto Raptors", "---", "tor"),
+    29: ("Memphis Grizzlies", "---", "mem"),
+    30: ("Charlotte Hornets", "---", "cha")
 }
 
-_TEAMS: Dict[str, Dict[str, Union[str, int]]] = {
-    str(team["id"]): team for team in teams_static.get_teams()
-}
 
+async def fetch_schedule_for_team(session: aiohttp.ClientSession, team_id: int, season_year: int) -> List[Dict]:
+    """Fetch schedule for a specific team and season. Returns list of game dicts.
 
-async def _rate_limit() -> None:
-    """Enforce rate limiting between API calls."""
-    global _last_call_ts
-    async with _rate_lock:
-        now = time.monotonic()
-        wait = RATE_LIMIT_SECONDS - (now - _last_call_ts)
-        if wait > 0:
-            await asyncio.sleep(wait)
-            now = time.monotonic()
-        _last_call_ts = now
-
-
-def _as_datetime(value: Union[date, datetime, str]) -> datetime:
-    """Convert various date formats to datetime."""
-    if isinstance(value, datetime):
-        return value
-    if isinstance(value, date):
-        return datetime.combine(value, datetime.min.time())
-    return pd.to_datetime(value).to_pydatetime()
-
-
-def _season_from_date(game_day: date) -> str:
-    """Determine NBA season string from a date (e.g., '2024-25')."""
-    if game_day.month >= 8:
-        start_year = game_day.year
-        end_year = (game_day.year + 1) % 100
-    else:
-        start_year = game_day.year - 1
-        end_year = game_day.year % 100
-    return f"{start_year}-{str(end_year).zfill(2)}"
-
-
-async def _fetch_full_season_gamelog(
-    team_id: int,
-    season: str,
-    season_type: str,
-) -> pd.DataFrame:
-    """Fetch full season game log for a team (cached)."""
-    cache_key = (team_id, season, season_type)
-
-    # Check cache first
-    if cache_key in _gamelog_cache:
-        return _gamelog_cache[cache_key]
-
-    # Fetch full season (no date_to filter)
-    for attempt in range(1, MAX_ATTEMPTS + 1):
-        try:
-            response = await asyncio.to_thread(
-                teamgamelog.TeamGameLog,
-                team_id=str(team_id),
-                season=season,
-                season_type_all_star=season_type,
-                league_id_nullable="00",
-                timeout=REQUEST_TIMEOUT,
-            )
-            df = response.get_data_frames()[0]
-            if "GAME_DATE" not in df.columns:
-                raise RuntimeError("TeamGameLog response missing GAME_DATE column")
-            df["GAME_DATE"] = pd.to_datetime(df["GAME_DATE"], format='mixed')
-            await _rate_limit()
-
-            # Cache the result
-            _gamelog_cache[cache_key] = df
-            return df
-        except Exception as err:
-            fail_fast = isinstance(err, requests.exceptions.ConnectionError)
-            if fail_fast or attempt >= MAX_ATTEMPTS:
-                raise
-            sleep_for = min(RETRY_BACKOFF_SECONDS * attempt, 6.0)
-            print(f"Retrying TeamGameLog for team {team_id} (attempt {attempt}): {err}")
-            await asyncio.sleep(sleep_for)
-
-    # Should never reach here due to raise in loop, but satisfies type checker
-    raise RuntimeError(f"Failed to fetch team gamelog for team {team_id}")
-
-
-async def _fetch_team_gamelog(
-    team_id: int,
-    season: str,
-    season_type: str,
-    through_date: datetime,
-) -> pd.DataFrame:
-    """Fetch team game log up to (but not including) through_date (uses cache)."""
-    # Get full season from cache
-    full_log = await _fetch_full_season_gamelog(team_id, season, season_type)
-
-    # Filter to games before through_date
-    if full_log.empty:
-        return full_log
-
-    filtered = full_log[full_log["GAME_DATE"] < through_date].copy()
-    return filtered
-
-
-async def _fetch_scoreboard(game_day: date) -> pd.DataFrame:
-    """Fetch NBA scoreboard for a specific date."""
-    nba_date = game_day.strftime("%m/%d/%Y")
-    
-    for attempt in range(1, MAX_ATTEMPTS + 1):
-        try:
-            board = await asyncio.to_thread(
-                scoreboardv2.ScoreboardV2,
-                game_date=nba_date,
-                league_id="00",
-                timeout=REQUEST_TIMEOUT,
-            )
-            df = board.game_header.get_data_frame()
-            await _rate_limit()
-            return df
-        except Exception as err:
-            fail_fast = isinstance(err, requests.exceptions.ConnectionError)
-            if fail_fast or attempt >= MAX_ATTEMPTS:
-                raise
-            sleep_for = min(RETRY_BACKOFF_SECONDS * attempt, 6.0)
-            print(f"Retrying Scoreboard for {nba_date} (attempt {attempt}): {err}")
-            await asyncio.sleep(sleep_for)
-    
-    # Should never reach here due to raise in loop, but satisfies type checker
-    raise RuntimeError(f"Failed to fetch scoreboard for {nba_date}")
-
-
-async def _get_team_cumulative_stats(
-    team_id: int,
-    game_date: datetime,
-    season: str,
-    season_type: str,
-) -> Dict[str, float]:
-    """Get cumulative stats for a team up to (not including) game_date."""
-    log_df = await _fetch_team_gamelog(team_id, season, season_type, game_date)
-    
-    if log_df is None or log_df.empty:
-        # Return zeros if no data available
-        stats = {f"AVG_{col}": 0.0 for col in PER_GAME_COLUMNS}
-        stats.update({pct_col: 0.0 for pct_col in PERCENT_DEPENDENCIES})
-        return stats
-    
-    games_played = len(log_df)
-    stats = {}
-    totals = {}
-
-    for col in PER_GAME_COLUMNS:
-        if col in log_df.columns:
-            series = pd.to_numeric(log_df[col], errors="coerce")
-            total = float(series.sum(skipna=True))
-            totals[col] = total
-            stats[f"AVG_{col}"] = total / games_played if games_played else 0.0
-        else:
-            stats[f"AVG_{col}"] = 0.0
-    
-    for pct_col, (made_col, att_col) in PERCENT_DEPENDENCIES.items():
-        made = totals.get(made_col)
-        attempts = totals.get(att_col)
-        stats[pct_col] = made / attempts if made and attempts and attempts > 0 else 0.0
-
-    return stats
-
-
-async def get_matchups_cumulative_stats_between(
-    start_date: Union[date, datetime, str],
-    end_date: Union[date, datetime, str],
-    *,
-    season_type: str = "Regular Season",
-    max_concurrency: int = 2,
-) -> pd.DataFrame:
-    """
-    Get cumulative stats for all NBA games between two dates.
-    
-    Returns one row per game with HOME_ and AWAY_ prefixed columns showing
-    each team's cumulative stats leading up to (but not including) that game.
-    
     Args:
-        start_date: Start date (inclusive)
-        end_date: End date (inclusive)
-        season_type: NBA season type (default "Regular Season")
-        max_concurrency: Max concurrent API calls
-        
-    Returns:
-        DataFrame with columns:
-            GAME_ID, GAME_DATE, HOME_TEAM_ID, AWAY_TEAM_ID,
-            HOME_AVG_PTS, HOME_AVG_REB, ..., HOME_FG_PCT,
-            AWAY_AVG_PTS, AWAY_AVG_REB, ..., AWAY_FG_PCT
+        team_id: ESPN team ID (1-30)
+        season_year: The second year of the season (e.g., 2024 for 2023-2024 season)
     """
-    start_day = _as_datetime(start_date).date()
-    end_day = _as_datetime(end_date).date()
+    url = f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/{team_id}/schedule?season={season_year}"
 
-    if end_day < start_day:
-        raise ValueError("end_date must be on or after start_date")
+    try:
+        async with session.get(url) as response:
+            data = await response.json()
 
-    # Create session for Polymarket API calls
-    async with aiohttp.ClientSession() as session:
-        semaphore = asyncio.Semaphore(max(1, max_concurrency))
+        events = data.get("events", [])
+        games = []
 
-        # Pre-fetch all scoreboards in parallel (with rate limiting)
-        date_list = [start_day + timedelta(days=i) for i in range((end_day - start_day).days + 1)]
-
-        # Limit concurrent scoreboard fetches to prevent API overwhelming
-        async def _fetch_scoreboard_limited(date_val):
-            async with scoreboard_semaphore:
-                return await _fetch_scoreboard(date_val)
-
-        scoreboard_semaphore = asyncio.Semaphore(10)  # Max 10 concurrent scoreboard requests
-        scoreboard_tasks = [_fetch_scoreboard_limited(d) for d in date_list]
-        scoreboard_results = await asyncio.gather(*scoreboard_tasks, return_exceptions=True)
-
-        # Build date->scoreboard mapping
-        scoreboards = {}
-        for date_val, result in zip(date_list, scoreboard_results):
-            if isinstance(result, Exception):
-                print(f"Skipping {date_val.isoformat()}: scoreboard error: {result}")
+        for event in events:
+            # Filter to regular season only
+            season_type = event.get("seasonType", {})
+            if season_type.get("id") != "2":  # "2" is regular season
                 continue
-            if not result.empty:
-                scoreboards[date_val] = result
 
-        # Process all games
-        tasks = []
-        for current, board_df in scoreboards.items():
-            for _, row in board_df.iterrows():
-                game_id = row["GAME_ID"]
-                home_id = int(row["HOME_TEAM_ID"])
-                away_id = int(row["VISITOR_TEAM_ID"])
+            # Get event details
+            event_id = event.get("id")
+            if not event_id:
+                continue
 
-                if str(home_id) not in _TEAMS or str(away_id) not in _TEAMS:
+            # Get competition data
+            competitions = event.get("competitions", [])
+            if not competitions or len(competitions) == 0:
+                continue
+
+            competition = competitions[0]
+            competitors = competition.get("competitors", [])
+
+            if len(competitors) < 2:
+                continue
+
+            # Extract home and away teams
+            home_team = next((c for c in competitors if c.get("homeAway") == "home"), None)
+            away_team = next((c for c in competitors if c.get("homeAway") == "away"), None)
+
+            if not home_team or not away_team:
+                continue
+
+            try:
+                # Parse game date
+                game_date_str = event.get("date")
+                if not game_date_str:
                     continue
-                async def _collect_game(
-                    game_id=game_id,
-                    game_date=current,
-                    home_id=home_id,
-                    away_id=away_id,
-                ):
-                    async with semaphore:
-                        season = _season_from_date(game_date)
-                        away_team_slug = str(_TEAMS[str(away_id)]["abbreviation"]).lower()
-                        home_team_slug = str(_TEAMS[str(home_id)]["abbreviation"]).lower()
-                        # 1) Fetch NBA stats concurrently
-                        home_stats, away_stats = await asyncio.gather(
-                            _get_team_cumulative_stats(
-                                home_id, _as_datetime(game_date), season, season_type
-                            ),
-                            _get_team_cumulative_stats(
-                                away_id, _as_datetime(game_date), season, season_type
-                            ),
-                        )
-                        # 2) Best-effort Polymarket call
-                        slug = f"nba-{away_team_slug}-{home_team_slug}-{game_date:%Y-%m-%d}"
-                        try:
-                            opening = await polyapi.get_opening_price(
-                                session,  # Pass session as first argument
-                                sport="nba",
-                                date=game_date,
-                                away_team=away_team_slug,
-                                home_team=home_team_slug,
-                            )
-                        except Exception as e:
-                            print(f"Polymarket error for slug {slug}: {e}")
-                            opening = None
 
-                        # Get team names
-                        home_team_info = _get_team_info(home_id)
-                        away_team_info = _get_team_info(away_id)
+                # Parse as UTC datetime
+                game_datetime_utc = datetime.fromisoformat(game_date_str.replace("Z", "+00:00"))
+                # Convert to US Eastern time to get the correct local game date
+                game_datetime_et = game_datetime_utc.astimezone(ZoneInfo("America/New_York"))
+                game_date = game_datetime_et.date()
 
-                        row_data = {
-                            "game_id": game_id,
-                            "game_date": pd.Timestamp(game_date),
-                            "home_team_id": home_id,
-                            "away_team_id": away_id,
-                            "home_team": home_team_info.get('full_name', 'Unknown'),
-                            "away_team": away_team_info.get('full_name', 'Unknown'),
-                        }
-                        # cumulative stats (lowercase)
-                        for key, value in home_stats.items():
-                            row_data[f"home_{key}"] = value
-                        for key, value in away_stats.items():
-                            row_data[f"away_{key}"] = value
-                        # opening prices + timestamps (new columns)
-                        if opening is not None:
-                            row_data["polymarket_away_price"] = opening["away_price"]
-                            row_data["polymarket_home_price"] = opening["home_price"]
-                            row_data["polymarket_start_ts"] = opening["start_ts"]
-                            row_data["polymarket_market_open_ts"] = opening["market_open_ts"]
-                            row_data["polymarket_market_close_ts"] = opening.get("market_close_ts")
-                        else:
-                            row_data["polymarket_away_price"] = None
-                            row_data["polymarket_home_price"] = None
-                            row_data["polymarket_start_ts"] = None
-                            row_data["polymarket_market_open_ts"] = None
-                            row_data["polymarket_market_close_ts"] = None
-                        return row_data
-                tasks.append(asyncio.create_task(_collect_game()))
+                # Get season year from event
+                season = event.get("season", {}).get("year", season_year)
 
-        if not tasks:
+                games.append({
+                    "game_id": event_id,
+                    "date": game_date,
+                    "season_year": season,
+                    "away_id": int(away_team["id"]),
+                    "home_id": int(home_team["id"]),
+                    "away_name": away_team.get("team", {}).get("displayName", "Unknown"),
+                    "home_name": home_team.get("team", {}).get("displayName", "Unknown")
+                })
+            except (ValueError, KeyError) as e:
+                print(f"Error parsing game {event_id}: {e}")
+                continue
+
+        return games
+    except Exception as e:
+        print(f"Error fetching schedule for team {team_id}, season {season_year}: {e}")
+        return []
+
+
+async def fetch_team_game_stats(session: aiohttp.ClientSession, event_id: str, team_id: int) -> Dict[str, float]:
+    """Fetch team statistics for a specific game. Returns dict of stat_name: value."""
+    url = f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event={event_id}"
+
+    # Whitelist of statistics to keep (good for similarity analysis)
+    ALLOWED_STATS = {
+        # Shooting efficiency
+        "fieldGoalPct",
+        "threePointFieldGoalPct",
+        "freeThrowPct",
+        # Rebounds
+        "totalRebounds",
+        "offensiveRebounds",
+        "defensiveRebounds",
+        # Playmaking
+        "assists",
+        "turnovers",
+        # Defense
+        "steals",
+        "blocks",
+        # Discipline
+        "fouls",
+        # Scoring patterns
+        "fastBreakPoints",
+        "pointsInPaint"
+    }
+
+    try:
+        async with session.get(url) as response:
+            data = await response.json()
+
+        teams = data.get("boxscore", {}).get("teams", [])
+
+        # Find the team by ID
+        team_data = None
+        for team in teams:
+            if team.get("team", {}).get("id") == str(team_id):
+                team_data = team
+                break
+
+        if not team_data:
+            return {}
+
+        # Extract only whitelisted statistics
+        statistics = team_data.get("statistics", [])
+        stats_dict = {}
+
+        for stat in statistics:
+            stat_name = stat.get("name")
+            stat_value = stat.get("displayValue")  # Basketball API uses displayValue
+
+            # Only process whitelisted stats
+            if stat_name in ALLOWED_STATS and stat_value is not None:
+                # Try to convert to float, skip if it's a string like "-" or "N/A"
+                if isinstance(stat_value, (int, float)):
+                    stats_dict[stat_name] = float(stat_value)
+                elif isinstance(stat_value, str) and stat_value not in ["-", "N/A", "", "--"]:
+                    try:
+                        stats_dict[stat_name] = float(stat_value)
+                    except ValueError:
+                        # Skip non-numeric values
+                        pass
+
+        return stats_dict
+    except Exception as e:
+        print(f"Error fetching stats for event {event_id}, team {team_id}: {e}")
+        return {}
+
+
+def get_team_cumulative_stats(team_id: int, season_year: int, before_date,
+                              schedules_cache: Dict, stats_cache: Dict) -> Dict[str, Optional[float]]:
+    """Calculate cumulative per-game stats for a team up to (not including) a specific date.
+
+    Args:
+        team_id: ESPN team ID
+        season_year: The second year of the season (e.g., 2024 for 2023-2024 season)
+        before_date: Calculate stats for all games before this date
+        schedules_cache: Pre-fetched schedules dict {(team_id, season): [games]}
+        stats_cache: Pre-fetched stats dict {(game_id, team_id): stats_dict}
+    """
+
+    # Get all games for this team from cache
+    cache_key = (team_id, season_year)
+    all_games = schedules_cache.get(cache_key, [])
+
+    # Filter to games before the target date
+    previous_games = [game for game in all_games if game["date"] < before_date]
+
+    if not previous_games:
+        # No previous games found, return empty stats
+        return {}
+
+    # Aggregate stats from cache
+    stat_totals = {}
+    games_with_stats = 0
+
+    for game in previous_games:
+        game_id = game["game_id"]
+        stats_key = (game_id, team_id)
+
+        game_stats = stats_cache.get(stats_key, {})
+
+        if game_stats:
+            games_with_stats += 1
+            for stat_name, stat_value in game_stats.items():
+                if stat_name not in stat_totals:
+                    stat_totals[stat_name] = 0.0
+                stat_totals[stat_name] += stat_value
+
+    if games_with_stats == 0:
+        return {}
+
+    # Calculate per-game averages
+    per_game_stats = {}
+    for stat_name, total in stat_totals.items():
+        per_game_stats[stat_name] = total / games_with_stats
+
+    return per_game_stats
+
+
+async def fetch_game_stats(session: aiohttp.ClientSession, game_info: Dict,
+                           schedules_cache: Dict, stats_cache: Dict,
+                           fetch_market: bool = True) -> Dict:
+    """Fetch all stats for a single game including cumulative team stats and Polymarket data."""
+
+    event_id = game_info["game_id"]
+    game_date = game_info["date"]
+    away_id = game_info["away_id"]
+    home_id = game_info["home_id"]
+    season_year = game_info["season_year"]
+
+    try:
+        # Get cumulative stats for both teams from cache
+        away_stats = get_team_cumulative_stats(away_id, season_year, game_date, schedules_cache, stats_cache)
+        home_stats = get_team_cumulative_stats(home_id, season_year, game_date, schedules_cache, stats_cache)
+
+        # Build row
+        row = {
+            "game_id": event_id,
+            "game_date": game_date,
+            "season": season_year,
+            "away_team": game_info["away_name"],
+            "away_team_id": away_id,
+            "home_team": game_info["home_name"],
+            "home_team_id": home_id
+        }
+
+        # Add cumulative stats with prefixes
+        for stat_name, stat_value in away_stats.items():
+            row[f"away_{stat_name}"] = stat_value
+        for stat_name, stat_value in home_stats.items():
+            row[f"home_{stat_name}"] = stat_value
+
+        # Fetch Polymarket data if requested
+        if fetch_market:
+            away_poly = TEAM_ID_MAP.get(away_id, (None, None, None))[2]
+            home_poly = TEAM_ID_MAP.get(home_id, (None, None, None))[2]
+
+            if away_poly and home_poly:
+                market_data = await polyapi.get_opening_price(
+                    session,
+                    sport="nba",
+                    date=game_date,
+                    away_team=away_poly,
+                    home_team=home_poly
+                )
+
+                row["polymarket_away_price"] = market_data.get("away_price")
+                row["polymarket_home_price"] = market_data.get("home_price")
+                row["polymarket_start_ts"] = market_data.get("start_ts")
+                row["polymarket_market_open_ts"] = market_data.get("market_open_ts")
+                row["polymarket_market_close_ts"] = market_data.get("market_close_ts")
+
+        return row
+    except Exception as e:
+        print(f"Error fetching game stats for {event_id}: {e}")
+        return {}
+
+
+async def fetch_all_game_stats(session: aiohttp.ClientSession, games: List[Dict],
+                               schedules_cache: Dict, stats_cache: Dict,
+                               max_concurrent: int, fetch_market_data: bool) -> List[Dict]:
+    """Fetch stats for all games with concurrency control."""
+    if not games:
+        return []
+
+    semaphore = asyncio.Semaphore(max_concurrent)
+
+    async def fetch_with_limit(game):
+        async with semaphore:
+            return await fetch_game_stats(session, game, schedules_cache, stats_cache, fetch_market_data)
+
+    tasks = [fetch_with_limit(game) for game in games]
+    results = await tqdm_asyncio.gather(*tasks, desc="Fetching games")
+
+    # Filter out failures
+    rows = []
+    for i, result in enumerate(results):
+        if isinstance(result, dict) and result:
+            rows.append(result)
+        elif isinstance(result, Exception):
+            print(f"Error fetching game {games[i]['game_id']}: {result}")
+
+    return rows
+
+
+async def get_historical_data(start_season: int, end_season: int,
+                              max_concurrent: int = 5,
+                              fetch_market_data: bool = True) -> pd.DataFrame:
+    """Fetch historical NBA game data with team stats and optionally market data.
+
+    Args:
+        start_season: Starting season year (e.g., 2024 for 2023-2024 season)
+        end_season: Ending season year (e.g., 2025 for 2024-2025 season)
+        max_concurrent: Maximum number of concurrent requests
+        fetch_market_data: Whether to fetch Polymarket market data
+
+    Returns:
+        DataFrame with game data, cumulative per-game team stats, and market data.
+        Excludes games from the first 2 calendar weeks of each season.
+    """
+
+    # Create session for all requests
+    async with aiohttp.ClientSession() as session:
+        # Collect all seasons to fetch (inclusive range)
+        seasons_to_fetch = list(range(start_season, end_season + 1))
+
+        print(f"Fetching data for seasons: {seasons_to_fetch}")
+
+        # Fetch schedules for all teams across all seasons
+        all_schedule_tasks = []
+        for season in seasons_to_fetch:
+            for team_id in range(1, 31):  # NBA has 30 teams (IDs 1-30)
+                all_schedule_tasks.append(fetch_schedule_for_team(session, team_id, season))
+
+        print(f"Fetching schedules for {len(all_schedule_tasks)} team-seasons...")
+        all_schedules = await asyncio.gather(*all_schedule_tasks)
+
+        # Flatten all games and remove duplicates
+        all_games_dict = {}  # Use dict to deduplicate by game_id
+        season_start_dates = {}  # Track first game date for each season
+
+        for games in all_schedules:
+            for game in games:
+                game_id = game["game_id"]
+                season = game["season_year"]
+
+                # Track season start dates
+                if season not in season_start_dates:
+                    season_start_dates[season] = game["date"]
+                else:
+                    season_start_dates[season] = min(season_start_dates[season], game["date"])
+
+                # Add game (deduplicates automatically)
+                if game_id not in all_games_dict:
+                    all_games_dict[game_id] = game
+
+        # Filter out games from first 2 calendar weeks of each season
+        filtered_games = []
+        for game in all_games_dict.values():
+            season = game["season_year"]
+            season_start = season_start_dates.get(season)
+
+            if season_start:
+                # Calculate cutoff date (2 weeks from season start)
+                cutoff_date = season_start + timedelta(days=14)
+
+                # Only include games after the first 2 weeks
+                if game["date"] >= cutoff_date:
+                    filtered_games.append(game)
+
+        print(f"Found {len(all_games_dict)} total games")
+        print(f"After filtering first 2 weeks: {len(filtered_games)} games")
+
+        if not filtered_games:
             return pd.DataFrame()
 
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        # Build schedules cache from already-fetched schedules
+        print("Building schedules cache...")
+        schedules_cache = {}
+        for i, games in enumerate(all_schedules):
+            if games:
+                # Determine team_id and season from first game in schedule
+                first_game = games[0]
+                season = first_game["season_year"]
 
-        rows = []
-        for result in results:
-            if isinstance(result, Exception):
-                print(f"Game collection error: {result}")
-                continue
-            rows.append(result)
+                # Determine which team this schedule belongs to
+                # Since we fetched in order (team_id 1-30), we can calculate
+                team_id = (i % 30) + 1  # Team IDs are 1-30
 
-        return pd.DataFrame(rows) if rows else pd.DataFrame()
+                cache_key = (team_id, season)
+                schedules_cache[cache_key] = games
+
+        print(f"Schedules cache built: {len(schedules_cache)} team-seasons")
+
+        # Build stats cache by pre-fetching all game stats
+        print("Pre-fetching game stats for all unique games...")
+
+        # Collect all unique (game_id, team_id) pairs needed
+        games_to_fetch = set()
+        for game in all_games_dict.values():
+            game_id = game["game_id"]
+            away_id = game["away_id"]
+            home_id = game["home_id"]
+            games_to_fetch.add((game_id, away_id))
+            games_to_fetch.add((game_id, home_id))
+
+        print(f"Fetching stats for {len(games_to_fetch)} game-team combinations...")
+
+        # Batch fetch all game stats with concurrency control
+        stats_semaphore = asyncio.Semaphore(max_concurrent)
+
+        async def fetch_stat_with_limit(game_id, team_id):
+            async with stats_semaphore:
+                stats = await fetch_team_game_stats(session, game_id, team_id)
+                return ((game_id, team_id), stats)
+
+        stat_tasks = [fetch_stat_with_limit(gid, tid) for gid, tid in games_to_fetch]
+        stat_results = await tqdm_asyncio.gather(*stat_tasks, desc="Fetching stats")
+
+        # Build stats cache
+        stats_cache = {}
+        for key, stats in stat_results:
+            if stats:  # Only cache non-empty stats
+                stats_cache[key] = stats
+
+        print(f"Stats cache built: {len(stats_cache)} entries")
+
+        # Fetch stats for all games using caches
+        rows = await fetch_all_game_stats(session, filtered_games, schedules_cache, stats_cache,
+                                         max_concurrent, fetch_market_data)
+
+    # Return as DataFrame
+    return pd.DataFrame(rows).dropna()
 
 
-__all__ = ["get_matchups_cumulative_stats_between"]
+def get_historical_data_sync(start_season: int, end_season: int,
+                             fetch_market_data: bool = True) -> pd.DataFrame:
+    """Synchronous wrapper for the async function.
+
+    Args:
+        start_season: Starting season year (e.g., 2024 for 2023-2024 season)
+        end_season: Ending season year (e.g., 2025 for 2024-2025 season)
+        fetch_market_data: Whether to fetch Polymarket market data
+    """
+    return asyncio.run(get_historical_data(start_season, end_season,
+                                          fetch_market_data=fetch_market_data))
+
+
+if __name__ == "__main__":
+    import time
+
+    # Test with 2024 season (2023-2024)
+    start_season = 2024
+    end_season = 2024
+
+    print(f"Fetching games from {start_season-1}-{start_season} to {end_season-1}-{end_season} season...")
+    start_time = time.time()
+
+    df = get_historical_data_sync(start_season, end_season, fetch_market_data=True)
+
+    elapsed = time.time() - start_time
+    print(f"\nFetched {len(df)} games in {elapsed:.2f} seconds")
+    print(f"\nColumns: {df.columns.tolist()}")
+    if len(df) > 0:
+        print(f"\nFirst game:\n{df.iloc[0]}")
+        print(f"\nSample stats:")
+        print(df[["game_id", "game_date", "away_team", "home_team",
+                  "away_fieldGoalPct", "home_fieldGoalPct"]].head())

@@ -143,7 +143,7 @@ def _determine_mapping(target_vals, similar_vals, features):
         }
 
 
-def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_symmetry: bool = False, use_symmetric: bool = True):
+def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_symmetry: bool = False, use_symmetric: bool = True, away_stats_game=None, home_stats_game=None):
     """
     Find K similar games for any sport (cached).
 
@@ -155,6 +155,8 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
         use_symmetry: If True, also search with flipped home/away features (ignored if use_symmetric=True)
         use_symmetric: If True (default), use symmetric feature transformation (max/min pairs)
                        This captures strength differentials which correlate with betting market probabilities
+        away_stats_game: Optional game object with away team's latest stats (for upcoming games)
+        home_stats_game: Optional game object with home team's latest stats (for upcoming games)
 
     Returns:
         List of dicts with game info and similarity scores
@@ -172,14 +174,32 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
 
     scaler, knn_model, all_games, features = cache[sport]
 
-    # Get target game
-    model = MODELS[sport]
-    target = db.query(model).filter_by(game_id=game_id).first()
-    if not target:
-        return []
+    # Get target game - either from database or construct from provided stats
+    if away_stats_game and home_stats_game:
+        # Construct synthetic target using latest team stats
+        # Extract away stats from the away_stats_game's away columns
+        # Extract home stats from the home_stats_game's home columns
+        target_vals = []
+        for feat in features:
+            if feat.startswith('home_'):
+                # Get from home_stats_game
+                val = getattr(home_stats_game, feat)
+                target_vals.append(val if val is not None else 0)
+            elif feat.startswith('away_'):
+                # Get from away_stats_game
+                val = getattr(away_stats_game, feat)
+                target_vals.append(val if val is not None else 0)
+            else:
+                target_vals.append(0)
+    else:
+        # Normal path - get target game from database
+        model = MODELS[sport]
+        target = db.query(model).filter_by(game_id=game_id).first()
+        if not target:
+            return []
 
-    # Extract target features
-    target_vals = [getattr(target, f) for f in features]
+        # Extract target features
+        target_vals = [getattr(target, f) for f in features]
 
     # Store original target features for mapping determination
     target_vals_original = target_vals.copy()
@@ -200,8 +220,8 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
         valid_games = []
         for i, idx in enumerate(indices[0]):
             game = all_games[idx]
-            # Skip the query game itself
-            if game.game_id == game_id:
+            # Skip the query game itself (not applicable for synthetic upcoming games)
+            if not (away_stats_game and home_stats_game) and game.game_id == game_id:
                 continue
             valid_games.append((game, distances[0][i]))
             # Stop once we have k results
@@ -245,8 +265,8 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
 
     for i, idx in enumerate(indices[0]):
         game = all_games[idx]
-        # Skip the query game itself
-        if game.game_id == game_id:
+        # Skip the query game itself (not applicable for synthetic upcoming games)
+        if not (away_stats_game and home_stats_game) and game.game_id == game_id:
             continue
         if game.game_id not in valid_games_dict:
             valid_games_dict[game.game_id] = (game, distances[0][i])
@@ -261,8 +281,8 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
         # Collect valid games from flipped search
         for i, idx in enumerate(indices_flip[0]):
             game = all_games[idx]
-            # Skip the query game itself
-            if game.game_id == game_id:
+            # Skip the query game itself (not applicable for synthetic upcoming games)
+            if not (away_stats_game and home_stats_game) and game.game_id == game_id:
                 continue
             # Keep the game with smaller distance (better match)
             if game.game_id not in valid_games_dict:

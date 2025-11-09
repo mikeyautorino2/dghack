@@ -160,7 +160,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$
 ;
 ;
 ;
-function PriceHistoryChart({ priceHistory, metadata, awayTeam, homeTeam, targetAwayTeam, targetHomeTeam, awayCorrespondsTo, homeCorrespondsTo }) {
+function PriceHistoryChart({ priceHistory, metadata, awayTeam, homeTeam, targetAwayTeam, targetHomeTeam, awayCorrespondsTo, homeCorrespondsTo, isLiveData = false }) {
     // Transform data for Recharts and filter to relevant time period
     const chartData = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>{
         // Filter to show only from game start onwards (preferred)
@@ -199,7 +199,7 @@ function PriceHistoryChart({ priceHistory, metadata, awayTeam, homeTeam, targetA
             children: "No price history available"
         }, void 0, false, {
             fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-            lineNumber: 77,
+            lineNumber: 79,
             columnNumber: 7
         }, this);
     }
@@ -228,7 +228,7 @@ function PriceHistoryChart({ priceHistory, metadata, awayTeam, homeTeam, targetA
                         children: timeLabel
                     }, void 0, false, {
                         fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                        lineNumber: 105,
+                        lineNumber: 107,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -241,7 +241,7 @@ function PriceHistoryChart({ priceHistory, metadata, awayTeam, homeTeam, targetA
                                         className: "w-3 h-3 rounded-full bg-chart-away"
                                     }, void 0, false, {
                                         fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                                        lineNumber: 110,
+                                        lineNumber: 112,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -254,7 +254,7 @@ function PriceHistoryChart({ priceHistory, metadata, awayTeam, homeTeam, targetA
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                                        lineNumber: 111,
+                                        lineNumber: 113,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -265,13 +265,13 @@ function PriceHistoryChart({ priceHistory, metadata, awayTeam, homeTeam, targetA
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                                        lineNumber: 114,
+                                        lineNumber: 116,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                                lineNumber: 109,
+                                lineNumber: 111,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -281,7 +281,7 @@ function PriceHistoryChart({ priceHistory, metadata, awayTeam, homeTeam, targetA
                                         className: "w-3 h-3 rounded-full bg-chart-home"
                                     }, void 0, false, {
                                         fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                                        lineNumber: 119,
+                                        lineNumber: 121,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -294,7 +294,7 @@ function PriceHistoryChart({ priceHistory, metadata, awayTeam, homeTeam, targetA
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                                        lineNumber: 120,
+                                        lineNumber: 122,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -305,32 +305,36 @@ function PriceHistoryChart({ priceHistory, metadata, awayTeam, homeTeam, targetA
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                                        lineNumber: 123,
+                                        lineNumber: 125,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                                lineNumber: 118,
+                                lineNumber: 120,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                        lineNumber: 108,
+                        lineNumber: 110,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                lineNumber: 104,
+                lineNumber: 106,
                 columnNumber: 9
             }, this);
         }
         return null;
     };
-    // Format timestamp for X-axis - show hours since game start
+    // Format timestamp for X-axis - show hours since game start or clock time for live data
     const formatXAxis = (timestamp)=>{
+        if (isLiveData) {
+            // For live data, show clock time
+            return (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$2f$format$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__["format"])(new Date(timestamp), 'h:mm a');
+        }
         if (!metadata?.game_start_ts || chartData.length === 0) {
             return (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$2f$format$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__["format"])(new Date(timestamp), 'h:mm a');
         }
@@ -344,143 +348,185 @@ function PriceHistoryChart({ priceHistory, metadata, awayTeam, homeTeam, targetA
         return `${value}%`;
     };
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: "h-64 w-full",
-        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$component$2f$ResponsiveContainer$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ResponsiveContainer"], {
-            width: "100%",
-            height: "100%",
-            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$chart$2f$LineChart$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["LineChart"], {
-                data: chartData,
-                margin: {
-                    top: 5,
-                    right: 10,
-                    left: 0,
-                    bottom: 5
-                },
-                children: [
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$cartesian$2f$CartesianGrid$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CartesianGrid"], {
-                        strokeDasharray: "3 3",
-                        stroke: "#1a1a1a"
-                    }, void 0, false, {
-                        fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                        lineNumber: 159,
-                        columnNumber: 11
-                    }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$cartesian$2f$XAxis$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["XAxis"], {
-                        dataKey: "timestamp",
-                        tickFormatter: formatXAxis,
-                        stroke: "#666",
-                        style: {
-                            fontSize: '12px'
-                        }
-                    }, void 0, false, {
-                        fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                        lineNumber: 160,
-                        columnNumber: 11
-                    }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$cartesian$2f$YAxis$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["YAxis"], {
-                        domain: [
-                            0,
-                            100
-                        ],
-                        tickFormatter: formatYAxis,
-                        stroke: "#666",
-                        style: {
-                            fontSize: '12px'
-                        }
-                    }, void 0, false, {
-                        fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                        lineNumber: 166,
-                        columnNumber: 11
-                    }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$component$2f$Tooltip$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Tooltip"], {
-                        content: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(CustomTooltip, {}, void 0, false, {
-                            fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                            lineNumber: 172,
-                            columnNumber: 29
-                        }, void 0)
-                    }, void 0, false, {
-                        fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                        lineNumber: 172,
-                        columnNumber: 11
-                    }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$component$2f$Legend$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Legend"], {
-                        wrapperStyle: {
-                            fontSize: '12px',
-                            paddingTop: '10px'
+        className: "space-y-2",
+        children: [
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "text-xs text-text-tertiary text-center",
+                children: isLiveData ? 'Time (clock time of price update)' : 'Time since game start (0h = kickoff/tip-off)'
+            }, void 0, false, {
+                fileName: "[project]/components/charts/PriceHistoryChart.tsx",
+                lineNumber: 161,
+                columnNumber: 7
+            }, this),
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "h-64 w-full",
+                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$component$2f$ResponsiveContainer$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ResponsiveContainer"], {
+                    width: "100%",
+                    height: "100%",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$chart$2f$LineChart$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["LineChart"], {
+                        data: chartData,
+                        margin: {
+                            top: 5,
+                            right: 10,
+                            left: 0,
+                            bottom: 5
                         },
-                        formatter: (value)=>{
-                            if (value === 'awayPrice') {
-                                const targetTeam = awayCorrespondsTo === 'away' ? targetAwayTeam : targetHomeTeam;
-                                return `${awayTeam} (≈ ${targetTeam})`;
-                            } else {
-                                const targetTeam = homeCorrespondsTo === 'home' ? targetHomeTeam : targetAwayTeam;
-                                return `${homeTeam} (≈ ${targetTeam})`;
-                            }
-                        }
-                    }, void 0, false, {
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$cartesian$2f$CartesianGrid$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CartesianGrid"], {
+                                strokeDasharray: "3 3",
+                                stroke: "#1a1a1a"
+                            }, void 0, false, {
+                                fileName: "[project]/components/charts/PriceHistoryChart.tsx",
+                                lineNumber: 172,
+                                columnNumber: 13
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$cartesian$2f$XAxis$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["XAxis"], {
+                                dataKey: "timestamp",
+                                tickFormatter: formatXAxis,
+                                stroke: "#666",
+                                style: {
+                                    fontSize: '12px'
+                                },
+                                type: "number",
+                                domain: [
+                                    'dataMin',
+                                    'dataMax'
+                                ],
+                                tickCount: 8,
+                                scale: "time"
+                            }, void 0, false, {
+                                fileName: "[project]/components/charts/PriceHistoryChart.tsx",
+                                lineNumber: 173,
+                                columnNumber: 13
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$cartesian$2f$YAxis$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["YAxis"], {
+                                domain: [
+                                    0,
+                                    100
+                                ],
+                                tickFormatter: formatYAxis,
+                                stroke: "#666",
+                                style: {
+                                    fontSize: '12px'
+                                }
+                            }, void 0, false, {
+                                fileName: "[project]/components/charts/PriceHistoryChart.tsx",
+                                lineNumber: 183,
+                                columnNumber: 13
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$component$2f$Tooltip$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Tooltip"], {
+                                content: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(CustomTooltip, {}, void 0, false, {
+                                    fileName: "[project]/components/charts/PriceHistoryChart.tsx",
+                                    lineNumber: 189,
+                                    columnNumber: 31
+                                }, void 0)
+                            }, void 0, false, {
+                                fileName: "[project]/components/charts/PriceHistoryChart.tsx",
+                                lineNumber: 189,
+                                columnNumber: 13
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$component$2f$Legend$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Legend"], {
+                                wrapperStyle: {
+                                    fontSize: '12px',
+                                    paddingTop: '10px'
+                                },
+                                formatter: (value)=>{
+                                    if (value === 'awayPrice') {
+                                        const targetTeam = awayCorrespondsTo === 'away' ? targetAwayTeam : targetHomeTeam;
+                                        return `${awayTeam} (≈ ${targetTeam})`;
+                                    } else {
+                                        const targetTeam = homeCorrespondsTo === 'home' ? targetHomeTeam : targetAwayTeam;
+                                        return `${homeTeam} (≈ ${targetTeam})`;
+                                    }
+                                }
+                            }, void 0, false, {
+                                fileName: "[project]/components/charts/PriceHistoryChart.tsx",
+                                lineNumber: 190,
+                                columnNumber: 13
+                            }, this),
+                            !isLiveData && metadata?.game_start_ts && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$cartesian$2f$ReferenceLine$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ReferenceLine"], {
+                                x: metadata.game_start_ts * 1000,
+                                stroke: "#10b981",
+                                strokeWidth: 2,
+                                label: {
+                                    value: 'Kickoff',
+                                    position: 'top',
+                                    style: {
+                                        fontSize: '10px',
+                                        fill: '#10b981',
+                                        fontWeight: 600
+                                    }
+                                }
+                            }, void 0, false, {
+                                fileName: "[project]/components/charts/PriceHistoryChart.tsx",
+                                lineNumber: 205,
+                                columnNumber: 15
+                            }, this),
+                            metadata?.market_close_ts && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$cartesian$2f$ReferenceLine$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ReferenceLine"], {
+                                x: metadata.market_close_ts * 1000,
+                                stroke: "#666",
+                                strokeDasharray: "3 3",
+                                label: {
+                                    value: 'Market Close',
+                                    position: 'top',
+                                    style: {
+                                        fontSize: '10px',
+                                        fill: '#999'
+                                    }
+                                }
+                            }, void 0, false, {
+                                fileName: "[project]/components/charts/PriceHistoryChart.tsx",
+                                lineNumber: 219,
+                                columnNumber: 15
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$cartesian$2f$Line$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Line"], {
+                                type: "monotone",
+                                dataKey: "awayPrice",
+                                stroke: "rgb(167, 139, 250)",
+                                /* var(--color-chart-away) */ strokeWidth: 2,
+                                dot: false,
+                                activeDot: {
+                                    r: 4
+                                }
+                            }, void 0, false, {
+                                fileName: "[project]/components/charts/PriceHistoryChart.tsx",
+                                lineNumber: 231,
+                                columnNumber: 11
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$cartesian$2f$Line$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Line"], {
+                                type: "monotone",
+                                dataKey: "homePrice",
+                                stroke: "rgb(52, 211, 153)",
+                                /* var(--color-chart-home) */ strokeWidth: 2,
+                                dot: false,
+                                activeDot: {
+                                    r: 4
+                                }
+                            }, void 0, false, {
+                                fileName: "[project]/components/charts/PriceHistoryChart.tsx",
+                                lineNumber: 239,
+                                columnNumber: 11
+                            }, this)
+                        ]
+                    }, void 0, true, {
                         fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                        lineNumber: 173,
-                        columnNumber: 11
-                    }, this),
-                    metadata?.market_close_ts && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$cartesian$2f$ReferenceLine$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ReferenceLine"], {
-                        x: metadata.market_close_ts * 1000,
-                        stroke: "#666",
-                        strokeDasharray: "3 3",
-                        label: {
-                            value: 'Market Close',
-                            position: 'top',
-                            style: {
-                                fontSize: '10px',
-                                fill: '#999'
-                            }
-                        }
-                    }, void 0, false, {
-                        fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                        lineNumber: 188,
-                        columnNumber: 13
-                    }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$cartesian$2f$Line$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Line"], {
-                        type: "monotone",
-                        dataKey: "awayPrice",
-                        stroke: "rgb(167, 139, 250)",
-                        /* var(--color-chart-away) */ strokeWidth: 2,
-                        dot: false,
-                        activeDot: {
-                            r: 4
-                        }
-                    }, void 0, false, {
-                        fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                        lineNumber: 200,
-                        columnNumber: 11
-                    }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$cartesian$2f$Line$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Line"], {
-                        type: "monotone",
-                        dataKey: "homePrice",
-                        stroke: "rgb(52, 211, 153)",
-                        /* var(--color-chart-home) */ strokeWidth: 2,
-                        dot: false,
-                        activeDot: {
-                            r: 4
-                        }
-                    }, void 0, false, {
-                        fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                        lineNumber: 208,
+                        lineNumber: 168,
                         columnNumber: 11
                     }, this)
-                ]
-            }, void 0, true, {
+                }, void 0, false, {
+                    fileName: "[project]/components/charts/PriceHistoryChart.tsx",
+                    lineNumber: 167,
+                    columnNumber: 9
+                }, this)
+            }, void 0, false, {
                 fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-                lineNumber: 155,
-                columnNumber: 9
+                lineNumber: 166,
+                columnNumber: 7
             }, this)
-        }, void 0, false, {
-            fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-            lineNumber: 154,
-            columnNumber: 7
-        }, this)
-    }, void 0, false, {
+        ]
+    }, void 0, true, {
         fileName: "[project]/components/charts/PriceHistoryChart.tsx",
-        lineNumber: 153,
+        lineNumber: 160,
         columnNumber: 5
     }, this);
 }
@@ -507,6 +553,51 @@ function GameDetailPage({ params }) {
     const [isLoading, setIsLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(true);
     const [error, setError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [k, setK] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(5);
+    // Live market state
+    const [liveMarket, setLiveMarket] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [livePriceHistory, setLivePriceHistory] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
+    const [isLoadingLiveMarket, setIsLoadingLiveMarket] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [lastUpdate, setLastUpdate] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
+    // Fetch live market data - wrapped in useCallback to avoid recreating on every render
+    const fetchLiveMarket = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(async ()=>{
+        setIsLoadingLiveMarket(true);
+        try {
+            const response = await fetch(`/api/games/${sport}/${gameId}/live-market`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch live market');
+            }
+            const result = await response.json();
+            setLiveMarket(result);
+            // If market exists and has price data, add to history
+            if (result.exists && result.away_price !== null && result.home_price !== null && result.timestamp) {
+                const newPricePoint = {
+                    timestamp: result.timestamp,
+                    away_price: result.away_price,
+                    home_price: result.home_price
+                };
+                setLivePriceHistory((prev)=>{
+                    // Avoid duplicates - check if this timestamp already exists
+                    const exists = prev.some((p)=>p.timestamp === newPricePoint.timestamp);
+                    if (exists) {
+                        return prev;
+                    }
+                    return [
+                        ...prev,
+                        newPricePoint
+                    ].sort((a, b)=>a.timestamp - b.timestamp);
+                });
+                setLastUpdate(new Date());
+            }
+        } catch (err) {
+            console.error('Failed to fetch live market:', err);
+        } finally{
+            setIsLoadingLiveMarket(false);
+        }
+    }, [
+        sport,
+        gameId
+    ]);
+    // Fetch historical analysis data
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         async function fetchAnalysis() {
             setIsLoading(true);
@@ -533,6 +624,18 @@ function GameDetailPage({ params }) {
         gameId,
         k
     ]);
+    // Fetch live market immediately on mount, then poll every 7 minutes
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        // Immediate fetch when page loads - user sees data right away
+        fetchLiveMarket();
+        // Set up polling interval (7 minutes = 420,000 milliseconds)
+        // This will fire 7 minutes AFTER the initial fetch
+        const interval = setInterval(fetchLiveMarket, 7 * 60 * 1000);
+        // Cleanup on unmount
+        return ()=>clearInterval(interval);
+    }, [
+        fetchLiveMarket
+    ]); // Include fetchLiveMarket in dependencies
     if (isLoading) {
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$layout$2f$AppShell$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AppShell"], {
             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -541,17 +644,17 @@ function GameDetailPage({ params }) {
                     className: "animate-spin w-8 h-8 border-2 border-accent-primary border-t-transparent rounded-full"
                 }, void 0, false, {
                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                    lineNumber: 51,
+                    lineNumber: 129,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                lineNumber: 50,
+                lineNumber: 128,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-            lineNumber: 49,
+            lineNumber: 127,
             columnNumber: 7
         }, this);
     }
@@ -565,7 +668,7 @@ function GameDetailPage({ params }) {
                         children: "⚠️"
                     }, void 0, false, {
                         fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                        lineNumber: 61,
+                        lineNumber: 139,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
@@ -573,7 +676,7 @@ function GameDetailPage({ params }) {
                         children: "Error loading game analysis"
                     }, void 0, false, {
                         fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                        lineNumber: 62,
+                        lineNumber: 140,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -581,18 +684,18 @@ function GameDetailPage({ params }) {
                         children: error
                     }, void 0, false, {
                         fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                        lineNumber: 63,
+                        lineNumber: 141,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                lineNumber: 60,
+                lineNumber: 138,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-            lineNumber: 59,
+            lineNumber: 137,
             columnNumber: 7
         }, this);
     }
@@ -605,17 +708,17 @@ function GameDetailPage({ params }) {
                     children: "Game not found"
                 }, void 0, false, {
                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                    lineNumber: 73,
+                    lineNumber: 151,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                lineNumber: 72,
+                lineNumber: 150,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-            lineNumber: 71,
+            lineNumber: 149,
             columnNumber: 7
         }, this);
     }
@@ -634,12 +737,12 @@ function GameDetailPage({ params }) {
                                 children: target_game.sport
                             }, void 0, false, {
                                 fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                lineNumber: 87,
+                                lineNumber: 165,
                                 columnNumber: 13
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                            lineNumber: 86,
+                            lineNumber: 164,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -652,7 +755,7 @@ function GameDetailPage({ params }) {
                                             children: "Away"
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 94,
+                                            lineNumber: 172,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -660,13 +763,13 @@ function GameDetailPage({ params }) {
                                             children: target_game.away_team
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 97,
+                                            lineNumber: 175,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                    lineNumber: 93,
+                                    lineNumber: 171,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -676,7 +779,7 @@ function GameDetailPage({ params }) {
                                             children: "Home"
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 102,
+                                            lineNumber: 180,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -684,26 +787,235 @@ function GameDetailPage({ params }) {
                                             children: target_game.home_team
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 105,
+                                            lineNumber: 183,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                    lineNumber: 101,
+                                    lineNumber: 179,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                            lineNumber: 92,
+                            lineNumber: 170,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                    lineNumber: 85,
+                    lineNumber: 163,
                     columnNumber: 9
+                }, this),
+                liveMarket && liveMarket.exists && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "bg-bg-secondary border border-border-subtle rounded-2xl p-8",
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "mb-6 flex items-center justify-between",
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: "flex items-center gap-3",
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
+                                            className: "text-xl font-semibold tracking-tight",
+                                            children: "Current Market (Live)"
+                                        }, void 0, false, {
+                                            fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                            lineNumber: 195,
+                                            columnNumber: 17
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "flex items-center gap-2",
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: "w-2 h-2 rounded-full bg-green-500 animate-pulse"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                                    lineNumber: 199,
+                                                    columnNumber: 19
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                    className: "text-xs text-text-tertiary",
+                                                    children: isLoadingLiveMarket ? 'Updating...' : 'Live'
+                                                }, void 0, false, {
+                                                    fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                                    lineNumber: 200,
+                                                    columnNumber: 19
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
+                                            fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                            lineNumber: 198,
+                                            columnNumber: 17
+                                        }, this)
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                    lineNumber: 194,
+                                    columnNumber: 15
+                                }, this),
+                                lastUpdate && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                    className: "text-xs text-text-tertiary",
+                                    children: [
+                                        "Last updated: ",
+                                        Math.floor((Date.now() - lastUpdate.getTime()) / 1000 / 60),
+                                        " min ago"
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                    lineNumber: 206,
+                                    columnNumber: 17
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                            lineNumber: 193,
+                            columnNumber: 13
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "grid grid-cols-1 md:grid-cols-2 gap-6 mb-6",
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: "bg-bg-tertiary rounded-lg p-4",
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "text-xs uppercase tracking-wide text-text-tertiary mb-2",
+                                            children: liveMarket.away_team
+                                        }, void 0, false, {
+                                            fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                            lineNumber: 215,
+                                            columnNumber: 17
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "text-3xl font-bold tabular-nums",
+                                            children: liveMarket.away_price !== null ? `${(liveMarket.away_price * 100).toFixed(1)}%` : '--'
+                                        }, void 0, false, {
+                                            fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                            lineNumber: 218,
+                                            columnNumber: 17
+                                        }, this)
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                    lineNumber: 214,
+                                    columnNumber: 15
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: "bg-bg-tertiary rounded-lg p-4",
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "text-xs uppercase tracking-wide text-text-tertiary mb-2",
+                                            children: liveMarket.home_team
+                                        }, void 0, false, {
+                                            fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                            lineNumber: 223,
+                                            columnNumber: 17
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "text-3xl font-bold tabular-nums",
+                                            children: liveMarket.home_price !== null ? `${(liveMarket.home_price * 100).toFixed(1)}%` : '--'
+                                        }, void 0, false, {
+                                            fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                            lineNumber: 226,
+                                            columnNumber: 17
+                                        }, this)
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                    lineNumber: 222,
+                                    columnNumber: 15
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                            lineNumber: 213,
+                            columnNumber: 13
+                        }, this),
+                        livePriceHistory.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                    className: "text-sm font-medium text-text-secondary mb-4",
+                                    children: "Price History (This Session)"
+                                }, void 0, false, {
+                                    fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                    lineNumber: 235,
+                                    columnNumber: 17
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$charts$2f$PriceHistoryChart$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PriceHistoryChart"], {
+                                    priceHistory: livePriceHistory,
+                                    metadata: null,
+                                    awayTeam: liveMarket.away_team,
+                                    homeTeam: liveMarket.home_team,
+                                    targetAwayTeam: liveMarket.away_team,
+                                    targetHomeTeam: liveMarket.home_team,
+                                    awayCorrespondsTo: "away",
+                                    homeCorrespondsTo: "home",
+                                    isLiveData: true
+                                }, void 0, false, {
+                                    fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                    lineNumber: 238,
+                                    columnNumber: 17
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                            lineNumber: 234,
+                            columnNumber: 15
+                        }, this),
+                        livePriceHistory.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "text-center py-8 text-text-tertiary text-sm",
+                            children: "Accumulating price data... Check back in 7 minutes for price history chart"
+                        }, void 0, false, {
+                            fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                            lineNumber: 253,
+                            columnNumber: 15
+                        }, this)
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                    lineNumber: 192,
+                    columnNumber: 11
+                }, this),
+                liveMarket && !liveMarket.exists && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "bg-bg-secondary border border-border-subtle rounded-2xl p-8",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "text-center py-8",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "text-4xl mb-2",
+                                children: "📊"
+                            }, void 0, false, {
+                                fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                lineNumber: 263,
+                                columnNumber: 15
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                className: "text-lg font-medium mb-1",
+                                children: "No Active Polymarket Market"
+                            }, void 0, false, {
+                                fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                lineNumber: 264,
+                                columnNumber: 15
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                className: "text-sm text-text-tertiary",
+                                children: "This game does not have an active betting market on Polymarket"
+                            }, void 0, false, {
+                                fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                                lineNumber: 265,
+                                columnNumber: 15
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                        lineNumber: 262,
+                        columnNumber: 13
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
+                    lineNumber: 261,
+                    columnNumber: 11
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "space-y-6",
@@ -721,7 +1033,7 @@ function GameDetailPage({ params }) {
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 116,
+                                            lineNumber: 276,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -729,13 +1041,13 @@ function GameDetailPage({ params }) {
                                             children: "Based on cumulative team statistics using K-Nearest Neighbors"
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 119,
+                                            lineNumber: 279,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                    lineNumber: 115,
+                                    lineNumber: 275,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
@@ -748,7 +1060,7 @@ function GameDetailPage({ params }) {
                                             children: "Top 3"
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 129,
+                                            lineNumber: 289,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -756,7 +1068,7 @@ function GameDetailPage({ params }) {
                                             children: "Top 5"
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 130,
+                                            lineNumber: 290,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -764,19 +1076,19 @@ function GameDetailPage({ params }) {
                                             children: "Top 10"
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 131,
+                                            lineNumber: 291,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                    lineNumber: 124,
+                                    lineNumber: 284,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                            lineNumber: 114,
+                            lineNumber: 274,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -792,7 +1104,7 @@ function GameDetailPage({ params }) {
                                                     children: idx + 1
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                    lineNumber: 143,
+                                                    lineNumber: 303,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -806,7 +1118,7 @@ function GameDetailPage({ params }) {
                                                                     children: similar.away_team
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                                    lineNumber: 148,
+                                                                    lineNumber: 308,
                                                                     columnNumber: 23
                                                                 }, this),
                                                                 ' @ ',
@@ -815,13 +1127,13 @@ function GameDetailPage({ params }) {
                                                                     children: similar.home_team
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                                    lineNumber: 152,
+                                                                    lineNumber: 312,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                            lineNumber: 147,
+                                                            lineNumber: 307,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -829,13 +1141,13 @@ function GameDetailPage({ params }) {
                                                             children: similar.date
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                            lineNumber: 156,
+                                                            lineNumber: 316,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                    lineNumber: 146,
+                                                    lineNumber: 306,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -846,7 +1158,7 @@ function GameDetailPage({ params }) {
                                                             children: "Similarity"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                            lineNumber: 159,
+                                                            lineNumber: 319,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -857,19 +1169,19 @@ function GameDetailPage({ params }) {
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                            lineNumber: 162,
+                                                            lineNumber: 322,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                                    lineNumber: 158,
+                                                    lineNumber: 318,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 142,
+                                            lineNumber: 302,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$charts$2f$PriceHistoryChart$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PriceHistoryChart"], {
@@ -883,35 +1195,35 @@ function GameDetailPage({ params }) {
                                             homeCorrespondsTo: similar.current_home_corresponds_to
                                         }, void 0, false, {
                                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                            lineNumber: 169,
+                                            lineNumber: 329,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, similar.game_id, true, {
                                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                                    lineNumber: 138,
+                                    lineNumber: 298,
                                     columnNumber: 15
                                 }, this))
                         }, void 0, false, {
                             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                            lineNumber: 136,
+                            lineNumber: 296,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-                    lineNumber: 113,
+                    lineNumber: 273,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-            lineNumber: 83,
+            lineNumber: 161,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/app/game/[sport]/[gameId]/page.tsx",
-        lineNumber: 82,
+        lineNumber: 160,
         columnNumber: 5
     }, this);
 }

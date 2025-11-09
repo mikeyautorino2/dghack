@@ -1,9 +1,26 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useState, useCallback } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { PriceHistoryChart } from '@/components/charts/PriceHistoryChart';
 import type { GameAnalysisResponse } from '@/types';
+
+interface LiveMarket {
+  exists: boolean;
+  market_id: string | null;
+  polymarket_slug: string | null;
+  away_team: string;
+  home_team: string;
+  away_price: number | null;
+  home_price: number | null;
+  timestamp: number | null;
+}
+
+interface PricePoint {
+  timestamp: number;
+  away_price: number;
+  home_price: number;
+}
 
 export default function GameDetailPage({
   params,
@@ -16,6 +33,54 @@ export default function GameDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [k, setK] = useState(5);
 
+  // Live market state
+  const [liveMarket, setLiveMarket] = useState<LiveMarket | null>(null);
+  const [livePriceHistory, setLivePriceHistory] = useState<PricePoint[]>([]);
+  const [isLoadingLiveMarket, setIsLoadingLiveMarket] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+
+  // Fetch live market data - wrapped in useCallback to avoid recreating on every render
+  const fetchLiveMarket = useCallback(async () => {
+    setIsLoadingLiveMarket(true);
+    try {
+      const response = await fetch(
+        `/api/games/${sport}/${gameId}/live-market`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch live market');
+      }
+
+      const result: LiveMarket = await response.json();
+      setLiveMarket(result);
+
+      // If market exists and has price data, add to history
+      if (result.exists && result.away_price !== null && result.home_price !== null && result.timestamp) {
+        const newPricePoint: PricePoint = {
+          timestamp: result.timestamp,
+          away_price: result.away_price,
+          home_price: result.home_price,
+        };
+
+        setLivePriceHistory((prev) => {
+          // Avoid duplicates - check if this timestamp already exists
+          const exists = prev.some(p => p.timestamp === newPricePoint.timestamp);
+          if (exists) {
+            return prev;
+          }
+          return [...prev, newPricePoint].sort((a, b) => a.timestamp - b.timestamp);
+        });
+
+        setLastUpdate(new Date());
+      }
+    } catch (err) {
+      console.error('Failed to fetch live market:', err);
+    } finally {
+      setIsLoadingLiveMarket(false);
+    }
+  }, [sport, gameId]);
+
+  // Fetch historical analysis data
   useEffect(() => {
     async function fetchAnalysis() {
       setIsLoading(true);
@@ -43,6 +108,19 @@ export default function GameDetailPage({
 
     fetchAnalysis();
   }, [sport, gameId, k]);
+
+  // Fetch live market immediately on mount, then poll every 7 minutes
+  useEffect(() => {
+    // Immediate fetch when page loads - user sees data right away
+    fetchLiveMarket();
+
+    // Set up polling interval (7 minutes = 420,000 milliseconds)
+    // This will fire 7 minutes AFTER the initial fetch
+    const interval = setInterval(fetchLiveMarket, 7 * 60 * 1000);
+
+    // Cleanup on unmount
+    return () => clearInterval(interval);
+  }, [fetchLiveMarket]); // Include fetchLiveMarket in dependencies
 
   if (isLoading) {
     return (
@@ -108,6 +186,88 @@ export default function GameDetailPage({
             </div>
           </div>
         </div>
+
+        {/* Live Market Section */}
+        {liveMarket && liveMarket.exists && (
+          <div className="bg-bg-secondary border border-border-subtle rounded-2xl p-8">
+            <div className="mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  Current Market (Live)
+                </h2>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-xs text-text-tertiary">
+                    {isLoadingLiveMarket ? 'Updating...' : 'Live'}
+                  </span>
+                </div>
+              </div>
+              {lastUpdate && (
+                <span className="text-xs text-text-tertiary">
+                  Last updated: {Math.floor((Date.now() - lastUpdate.getTime()) / 1000 / 60)} min ago
+                </span>
+              )}
+            </div>
+
+            {/* Current Prices */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="bg-bg-tertiary rounded-lg p-4">
+                <div className="text-xs uppercase tracking-wide text-text-tertiary mb-2">
+                  {liveMarket.away_team}
+                </div>
+                <div className="text-3xl font-bold tabular-nums">
+                  {liveMarket.away_price !== null ? `${(liveMarket.away_price * 100).toFixed(1)}%` : '--'}
+                </div>
+              </div>
+              <div className="bg-bg-tertiary rounded-lg p-4">
+                <div className="text-xs uppercase tracking-wide text-text-tertiary mb-2">
+                  {liveMarket.home_team}
+                </div>
+                <div className="text-3xl font-bold tabular-nums">
+                  {liveMarket.home_price !== null ? `${(liveMarket.home_price * 100).toFixed(1)}%` : '--'}
+                </div>
+              </div>
+            </div>
+
+            {/* Live Price History Chart */}
+            {livePriceHistory.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-text-secondary mb-4">
+                  Price History (This Session)
+                </h3>
+                <PriceHistoryChart
+                  priceHistory={livePriceHistory}
+                  metadata={null}
+                  awayTeam={liveMarket.away_team}
+                  homeTeam={liveMarket.home_team}
+                  targetAwayTeam={liveMarket.away_team}
+                  targetHomeTeam={liveMarket.home_team}
+                  awayCorrespondsTo="away"
+                  homeCorrespondsTo="home"
+                  isLiveData={true}
+                />
+              </div>
+            )}
+
+            {livePriceHistory.length === 0 && (
+              <div className="text-center py-8 text-text-tertiary text-sm">
+                Accumulating price data... Check back in 7 minutes for price history chart
+              </div>
+            )}
+          </div>
+        )}
+
+        {liveMarket && !liveMarket.exists && (
+          <div className="bg-bg-secondary border border-border-subtle rounded-2xl p-8">
+            <div className="text-center py-8">
+              <div className="text-4xl mb-2">📊</div>
+              <h3 className="text-lg font-medium mb-1">No Active Polymarket Market</h3>
+              <p className="text-sm text-text-tertiary">
+                This game does not have an active betting market on Polymarket
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Similar Games Section */}
         <div className="space-y-6">

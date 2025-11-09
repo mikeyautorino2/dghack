@@ -24,6 +24,7 @@ interface PriceHistoryChartProps {
   targetHomeTeam: string;
   awayCorrespondsTo: 'home' | 'away';
   homeCorrespondsTo: 'home' | 'away';
+  isLiveData?: boolean;
 }
 
 export function PriceHistoryChart({
@@ -35,6 +36,7 @@ export function PriceHistoryChart({
   targetHomeTeam,
   awayCorrespondsTo,
   homeCorrespondsTo,
+  isLiveData = false,
 }: PriceHistoryChartProps) {
   // Transform data for Recharts and filter to relevant time period
   const chartData = useMemo(() => {
@@ -131,8 +133,13 @@ export function PriceHistoryChart({
     return null;
   };
 
-  // Format timestamp for X-axis - show hours since game start
+  // Format timestamp for X-axis - show hours since game start or clock time for live data
   const formatXAxis = (timestamp: number) => {
+    if (isLiveData) {
+      // For live data, show clock time
+      return format(new Date(timestamp), 'h:mm a');
+    }
+
     if (!metadata?.game_start_ts || chartData.length === 0) {
       return format(new Date(timestamp), 'h:mm a');
     }
@@ -150,52 +157,76 @@ export function PriceHistoryChart({
   };
 
   return (
-    <div className="h-64 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart
-          data={chartData}
-          margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
-          <XAxis
-            dataKey="timestamp"
-            tickFormatter={formatXAxis}
-            stroke="#666"
-            style={{ fontSize: '12px' }}
-          />
-          <YAxis
-            domain={[0, 100]}
-            tickFormatter={formatYAxis}
-            stroke="#666"
-            style={{ fontSize: '12px' }}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend
-            wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
-            formatter={(value: string) => {
-              if (value === 'awayPrice') {
-                const targetTeam = awayCorrespondsTo === 'away' ? targetAwayTeam : targetHomeTeam;
-                return `${awayTeam} (≈ ${targetTeam})`;
-              } else {
-                const targetTeam = homeCorrespondsTo === 'home' ? targetHomeTeam : targetAwayTeam;
-                return `${homeTeam} (≈ ${targetTeam})`;
-              }
-            }}
-          />
-
-          {/* Reference line for market close if available */}
-          {metadata?.market_close_ts && (
-            <ReferenceLine
-              x={metadata.market_close_ts * 1000}
+    <div className="space-y-2">
+      <div className="text-xs text-text-tertiary text-center">
+        {isLiveData
+          ? 'Time (clock time of price update)'
+          : 'Time since game start (0h = kickoff/tip-off)'}
+      </div>
+      <div className="h-64 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={chartData}
+            margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
+            <XAxis
+              dataKey="timestamp"
+              tickFormatter={formatXAxis}
               stroke="#666"
-              strokeDasharray="3 3"
-              label={{
-                value: 'Market Close',
-                position: 'top',
-                style: { fontSize: '10px', fill: '#999' },
+              style={{ fontSize: '12px' }}
+              type="number"
+              domain={['dataMin', 'dataMax']}
+              tickCount={8}
+              scale="time"
+            />
+            <YAxis
+              domain={[0, 100]}
+              tickFormatter={formatYAxis}
+              stroke="#666"
+              style={{ fontSize: '12px' }}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend
+              wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+              formatter={(value: string) => {
+                if (value === 'awayPrice') {
+                  const targetTeam = awayCorrespondsTo === 'away' ? targetAwayTeam : targetHomeTeam;
+                  return `${awayTeam} (≈ ${targetTeam})`;
+                } else {
+                  const targetTeam = homeCorrespondsTo === 'home' ? targetHomeTeam : targetAwayTeam;
+                  return `${homeTeam} (≈ ${targetTeam})`;
+                }
               }}
             />
-          )}
+
+            {/* Reference line at game start (time = 0) - only for historical data */}
+            {!isLiveData && metadata?.game_start_ts && (
+              <ReferenceLine
+                x={metadata.game_start_ts * 1000}
+                stroke="#10b981"
+                strokeWidth={2}
+                label={{
+                  value: 'Kickoff',
+                  position: 'top',
+                  style: { fontSize: '10px', fill: '#10b981', fontWeight: 600 },
+                }}
+              />
+            )}
+
+            {/* Reference line for market close if available */}
+            {metadata?.market_close_ts && (
+              <ReferenceLine
+                x={metadata.market_close_ts * 1000}
+                stroke="#666"
+                strokeDasharray="3 3"
+                label={{
+                  value: 'Market Close',
+                  position: 'top',
+                  style: { fontSize: '10px', fill: '#999' },
+                }}
+              />
+            )}
 
           <Line
             type="monotone"
@@ -215,6 +246,7 @@ export function PriceHistoryChart({
           />
         </LineChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }

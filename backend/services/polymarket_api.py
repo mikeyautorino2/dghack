@@ -226,6 +226,59 @@ async def get_current_price(
         return {}
 
 
+async def get_price_by_slug(session: aiohttp.ClientSession, slug: str) -> dict:
+    """
+    Get current price for a market using its slug directly.
+
+    Args:
+        session: aiohttp session
+        slug: Polymarket slug (e.g., "nfl-giants-broncos-2024-11-08")
+
+    Returns:
+        Dict with away_price, home_price, timestamp or empty dict on error
+    """
+    try:
+        market_url = f"https://gamma-api.polymarket.com/markets/slug/{slug}"
+        price_url = "https://clob.polymarket.com/prices-history"
+
+        # Get market metadata
+        async with _polymarket_semaphore:
+            data = await _rate_limited_get(session, market_url)
+
+            import json
+            clobIdTokens = json.loads(data["clobTokenIds"])
+
+            # Get current price (last 2 minutes)
+            from datetime import datetime
+            now_ts = int(datetime.now().timestamp())
+            start_ts = now_ts - 120
+
+            queryString = {
+                "market": clobIdTokens[0],
+                "startTs": start_ts,
+                "endTs": now_ts
+            }
+
+            info = await _rate_limited_get(session, price_url, params=queryString)
+
+            if not info.get("history"):
+                return {}
+
+            # Get most recent price
+            price_first = info["history"][-1]["p"]
+            price_second = 1.0 - price_first
+
+            return {
+                "away_price": price_first,
+                "home_price": price_second,
+                "timestamp": now_ts
+            }
+
+    except Exception as e:
+        print(f"Error fetching price for {slug}: {e}")
+        return {}
+
+
 async def check_market_exists(
     session: aiohttp.ClientSession,
     sport: str,

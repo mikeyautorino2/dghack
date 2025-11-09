@@ -10,6 +10,7 @@ Provides endpoints for:
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import aiohttp
+import asyncio
 from .db import SessionLocal, ActiveMarket, NFLGameFeatures, NBAGameFeatures
 from .services.knn_service import find_similar_games
 from .services.price_history_service import fetch_price_histories_batch
@@ -130,6 +131,123 @@ def get_similar_matchups(market_id: str, k: int = 5):
         db.close()
 
 
+@app.get("/api/games/{sport}/{game_id}/live-market")
+async def get_live_market(sport: str, game_id: str):
+    """
+    Get current live market price for the target game.
+
+    Checks if an active Polymarket market exists for this game and returns
+    the current price. Used for real-time polling on game detail page.
+
+    Args:
+        sport: Sport type (NBA or NFL)
+        game_id: Game ID from database
+
+    Returns:
+        {
+            "exists": bool,
+            "market_id": str | null,
+            "polymarket_slug": str | null,
+            "away_team": str,
+            "home_team": str,
+            "away_price": float | null,
+            "home_price": float | null,
+            "timestamp": int | null
+        }
+    """
+    db = SessionLocal()
+    try:
+        # Validate sport
+        sport_upper = sport.upper()
+        if sport_upper not in ['NBA', 'NFL']:
+            raise HTTPException(status_code=400, detail="Sport must be NBA or NFL")
+
+        # Get the appropriate model
+        model = NBAGameFeatures if sport_upper == 'NBA' else NFLGameFeatures
+
+        # Get target game from database or ActiveMarket
+        target_game = db.query(model).filter_by(game_id=game_id).first()
+
+        if not target_game:
+            # Check if it's an upcoming game in ActiveMarket
+            active_market = db.query(ActiveMarket).filter_by(market_id=game_id).first()
+
+            if not active_market:
+                raise HTTPException(status_code=404, detail=f"Game {game_id} not found")
+
+            # Use active market's info
+            away_team_str = str(active_market.away_team)
+            home_team_str = str(active_market.home_team)
+            game_date_val = active_market.game_date
+        else:
+            # Use historical game's info
+            away_team_str = str(target_game.away_team)
+            home_team_str = str(target_game.home_team)
+            game_date_val = target_game.game_date
+
+        # Convert team names to Polymarket abbreviations
+        try:
+            away_abbrev = get_polymarket_abbrev(away_team_str, sport_upper)
+            home_abbrev = get_polymarket_abbrev(home_team_str, sport_upper)
+        except ValueError as e:
+            # Team name not in mapping - return market doesn't exist
+            return {
+                "exists": False,
+                "market_id": None,
+                "polymarket_slug": None,
+                "away_team": target_game.away_team,
+                "home_team": target_game.home_team,
+                "away_price": None,
+                "home_price": None,
+                "timestamp": None
+            }
+
+        # Check if market exists on Polymarket
+        async with aiohttp.ClientSession() as session:
+            market_info = await polymarket_api.check_market_exists(
+                session=session,
+                sport=sport_upper,
+                date=game_date_val,
+                away_team=away_abbrev,
+                home_team=home_abbrev
+            )
+
+            if not market_info or not market_info.get('exists'):
+                return {
+                    "exists": False,
+                    "market_id": None,
+                    "polymarket_slug": None,
+                    "away_team": away_team_str,
+                    "home_team": home_team_str,
+                    "away_price": None,
+                    "home_price": None,
+                    "timestamp": None
+                }
+
+            # Market exists - fetch current price
+            current_price = await polymarket_api.get_current_price(
+                session=session,
+                sport=sport_upper,
+                date=game_date_val,
+                away_team=away_abbrev,
+                home_team=home_abbrev
+            )
+
+            return {
+                "exists": True,
+                "market_id": current_price.get('market_id'),
+                "polymarket_slug": market_info.get('slug'),
+                "away_team": away_team_str,
+                "home_team": home_team_str,
+                "away_price": current_price.get('away_price'),
+                "home_price": current_price.get('home_price'),
+                "timestamp": current_price.get('timestamp')
+            }
+
+    finally:
+        db.close()
+
+
 @app.get("/api/games/{sport}/{game_id}/analysis")
 async def get_game_analysis(sport: str, game_id: str, k: int = 5):
     """
@@ -187,22 +305,82 @@ async def get_game_analysis(sport: str, game_id: str, k: int = 5):
 
         # Get target game from database
         target_game = db.query(model).filter_by(game_id=game_id).first()
-        if not target_game:
-            raise HTTPException(status_code=404, detail=f"Game {game_id} not found")
 
-        # Find similar games using KNN
-        similar_games = find_similar_games(db, sport_upper, game_id, k=k)
+        # If not found in historical tables, check if it's an upcoming game in ActiveMarket
+        if not target_game:
+            active_market = db.query(ActiveMarket).filter_by(market_id=game_id).first()
+
+            if active_market:
+                # This is an upcoming game - get latest team stats and run KNN
+                away_team_str = str(active_market.away_team)
+                home_team_str = str(active_market.home_team)
+
+                # Get most recent games for each team to extract current season stats
+                # For away team: get their most recent game as away team
+                away_latest = db.query(model).filter(
+                    model.away_team == away_team_str
+                ).order_by(model.game_date.desc()).first()
+
+                # For home team: get their most recent game as home team
+                home_latest = db.query(model).filter(
+                    model.home_team == home_team_str
+                ).order_by(model.game_date.desc()).first()
+
+                if not away_latest or not home_latest:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"No historical stats found for {away_team_str} or {home_team_str}"
+                    )
+
+                # Create synthetic upcoming game using latest stats
+                # Use a special game_id that we'll recognize later
+                synthetic_game_id = f"upcoming_{active_market.market_id}"
+
+                # Find similar games using the latest team stats
+                # We'll pass the synthetic game_id and the KNN service will handle it
+                similar_games = find_similar_games(
+                    db, sport_upper, synthetic_game_id, k=k,
+                    away_stats_game=away_latest, home_stats_game=home_latest
+                )
+
+                # Return with upcoming game as target
+                target_game_info = {
+                    "game_id": str(active_market.market_id),
+                    "sport": str(active_market.sport),
+                    "date": str(active_market.game_date),
+                    "home_team": home_team_str,
+                    "away_team": away_team_str
+                }
+
+                # If no similar games, return early
+                if not similar_games:
+                    return {
+                        "target_game": target_game_info,
+                        "similar_games": []
+                    }
+
+                # Continue with price history fetching for similar games
+                # (rest of the code will handle this)
+
+            else:
+                # Not in historical tables and not in ActiveMarket
+                raise HTTPException(status_code=404, detail=f"Game {game_id} not found")
+        else:
+            # Found in historical tables - use normal KNN
+            similar_games = find_similar_games(db, sport_upper, game_id, k=k)
+
+            target_game_info = {
+                "game_id": str(target_game.game_id),
+                "sport": str(target_game.sport),
+                "date": str(target_game.game_date),
+                "home_team": str(target_game.home_team),
+                "away_team": str(target_game.away_team)
+            }
 
         if not similar_games:
             # No similar games found, return just target game info
             return {
-                "target_game": {
-                    "game_id": target_game.game_id,
-                    "sport": target_game.sport,
-                    "date": str(target_game.game_date),
-                    "home_team": target_game.home_team,
-                    "away_team": target_game.away_team
-                },
+                "target_game": target_game_info,
                 "similar_games": []
             }
 
@@ -257,13 +435,7 @@ async def get_game_analysis(sport: str, game_id: str, k: int = 5):
             results.append(result_entry)
 
         return {
-            "target_game": {
-                "game_id": target_game.game_id,
-                "sport": target_game.sport,
-                "date": str(target_game.game_date),
-                "home_team": target_game.home_team,
-                "away_team": target_game.away_team
-            },
+            "target_game": target_game_info,
             "similar_games": results
         }
 

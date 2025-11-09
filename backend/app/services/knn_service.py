@@ -137,16 +137,31 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
 
     # If using symmetric features, no need for flip-and-search (symmetry is built-in)
     if use_symmetric:
-        # Simple single search
-        results = []
-        max_dist = distances[0].max() if distances[0].max() > 0 else 1
-
+        # First pass: collect valid games (excluding query game)
+        valid_games = []
         for i, idx in enumerate(indices[0]):
             game = all_games[idx]
             # Skip the query game itself
             if game.game_id == game_id:
                 continue
-            similarity = 100 * (1 - distances[0][i] / max_dist)
+            valid_games.append((game, distances[0][i]))
+            # Stop once we have k results
+            if len(valid_games) >= k:
+                break
+
+        # Handle edge case
+        if not valid_games:
+            return []
+
+        # Use absolute normalization with fixed reference scale
+        # In standardized euclidean space, typical distances range from 0 to ~2-3
+        # Map: distance 0 → 100% similarity, distance 2.0 → 0% similarity
+        max_reference = 2.0
+
+        # Build results with absolute normalization
+        results = []
+        for game, dist in valid_games:
+            similarity = 100 * max(0, (1 - dist / max_reference))
             results.append({
                 'game_id': game.game_id,
                 'date': game.game_date,
@@ -154,29 +169,19 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
                 'away': game.away_team,
                 'similarity': round(similarity, 1)
             })
-            # Stop once we have k results
-            if len(results) >= k:
-                break
         return results
 
     # Otherwise, use flip-and-search approach
-    results_dict = {}
-    max_dist = distances[0].max() if distances[0].max() > 0 else 1
+    # Collect valid games from original search
+    valid_games_dict = {}  # game_id -> (game, distance)
 
     for i, idx in enumerate(indices[0]):
         game = all_games[idx]
         # Skip the query game itself
         if game.game_id == game_id:
             continue
-        similarity = 100 * (1 - distances[0][i] / max_dist)
-        if game.game_id not in results_dict:
-            results_dict[game.game_id] = {
-                'game_id': game.game_id,
-                'date': game.game_date,
-                'home': game.home_team,
-                'away': game.away_team,
-                'similarity': round(similarity, 1)
-            }
+        if game.game_id not in valid_games_dict:
+            valid_games_dict[game.game_id] = (game, distances[0][i])
 
     # If symmetry enabled, also search with flipped features
     if use_symmetry:
@@ -184,30 +189,42 @@ def find_similar_games(db: Session, sport: str, game_id: str, k: int = 5, use_sy
         flipped_scaled = scaler.transform([flipped_vals])
 
         distances_flip, indices_flip = knn_model.kneighbors(flipped_scaled, n_neighbors=k+1)
-        max_dist_flip = distances_flip[0].max() if distances_flip[0].max() > 0 else 1
 
+        # Collect valid games from flipped search
         for i, idx in enumerate(indices_flip[0]):
             game = all_games[idx]
             # Skip the query game itself
             if game.game_id == game_id:
                 continue
-            similarity = 100 * (1 - distances_flip[0][i] / max_dist_flip)
-            if game.game_id not in results_dict:
-                results_dict[game.game_id] = {
-                    'game_id': game.game_id,
-                    'date': game.game_date,
-                    'home': game.home_team,
-                    'away': game.away_team,
-                    'similarity': round(similarity, 1)
-                }
+            # Keep the game with smaller distance (better match)
+            if game.game_id not in valid_games_dict:
+                valid_games_dict[game.game_id] = (game, distances_flip[0][i])
             else:
-                # Keep higher similarity score
-                results_dict[game.game_id]['similarity'] = round(
-                    max(results_dict[game.game_id]['similarity'], similarity), 1
-                )
+                existing_dist = valid_games_dict[game.game_id][1]
+                if distances_flip[0][i] < existing_dist:
+                    valid_games_dict[game.game_id] = (game, distances_flip[0][i])
+
+    # Handle edge case
+    if not valid_games_dict:
+        return []
+
+    # Use absolute normalization with fixed reference scale
+    max_reference = 2.0
+
+    # Build results with absolute normalization
+    results = []
+    for game, dist in valid_games_dict.values():
+        similarity = 100 * max(0, (1 - dist / max_reference))
+        results.append({
+            'game_id': game.game_id,
+            'date': game.game_date,
+            'home': game.home_team,
+            'away': game.away_team,
+            'similarity': round(similarity, 1)
+        })
 
     # Sort by similarity and return top k
-    results = sorted(results_dict.values(), key=lambda x: x['similarity'], reverse=True)[:k]
+    results = sorted(results, key=lambda x: x['similarity'], reverse=True)[:k]
     return results
 
 

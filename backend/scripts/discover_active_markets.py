@@ -2,7 +2,7 @@
 """
 Market Discovery Service
 
-Discovers upcoming NFL games and checks if Polymarket markets exist for them.
+Discovers upcoming NFL and NBA games and checks if Polymarket markets exist for them.
 Stores active markets in the database for continuous price tracking.
 
 Run frequency: Every 6 hours via cron
@@ -24,6 +24,7 @@ from sqlalchemy import text
 # Import service APIs
 from backend.services import polymarket_api
 from backend.services.football_api import TEAM_ID_MAP as NFL_TEAM_MAP
+from backend.services.basketball_api import TEAM_ID_MAP as NBA_TEAM_MAP
 from backend.app import db
 
 
@@ -185,6 +186,124 @@ async def discover_nfl_markets(session: aiohttp.ClientSession, days_ahead: int =
     return markets
 
 
+async def discover_nba_markets(session: aiohttp.ClientSession, days_ahead: int = 10) -> list[dict]:
+    """
+    Discover upcoming NBA games and check for Polymarket markets.
+
+    Args:
+        session: aiohttp session for making API calls
+        days_ahead: How many days ahead to search for games (default 10)
+
+    Returns:
+        List of market dicts ready for database insertion
+    """
+    print(f"Discovering NBA markets (next {days_ahead} days)...")
+
+    markets = []
+    today = datetime.now(ZoneInfo("America/New_York")).date()
+
+    # Loop through upcoming dates
+    for day_offset in range(days_ahead + 1):
+        check_date = today + timedelta(days=day_offset)
+        date_str = check_date.strftime("%Y%m%d")
+
+        try:
+            # ESPN NBA Scoreboard API
+            scoreboard_url = f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates={date_str}"
+
+            async with session.get(scoreboard_url) as response:
+                if response.status != 200:
+                    continue
+
+                data = await response.json()
+                events = data.get("events", [])
+
+                for event in events:
+                    try:
+                        # Filter to regular season only
+                        season_type = event.get("season", {}).get("type", 0)
+                        if season_type != 2:  # 2 = regular season
+                            continue
+
+                        event_id = event.get("id")
+                        if not event_id:
+                            continue
+
+                        # Get competition data
+                        competitions = event.get("competitions", [])
+                        if not competitions:
+                            continue
+
+                        competition = competitions[0]
+                        competitors = competition.get("competitors", [])
+
+                        if len(competitors) < 2:
+                            continue
+
+                        # Extract home and away teams
+                        home_team = next((c for c in competitors if c.get("homeAway") == "home"), None)
+                        away_team = next((c for c in competitors if c.get("homeAway") == "away"), None)
+
+                        if not home_team or not away_team:
+                            continue
+
+                        # Get team IDs and names
+                        away_id = int(away_team["id"])
+                        home_id = int(home_team["id"])
+                        away_name = away_team.get("team", {}).get("displayName", "Unknown")
+                        home_name = home_team.get("team", {}).get("displayName", "Unknown")
+
+                        # Parse game date
+                        game_date_str = event.get("date")
+                        if not game_date_str:
+                            continue
+
+                        game_datetime_utc = datetime.fromisoformat(game_date_str.replace("Z", "+00:00"))
+                        game_datetime_et = game_datetime_utc.astimezone(ZoneInfo("America/New_York"))
+                        game_date = game_datetime_et.date()
+
+                        # Get Polymarket team abbreviations
+                        away_poly = NBA_TEAM_MAP.get(away_id, (None, None, None))[2]
+                        home_poly = NBA_TEAM_MAP.get(home_id, (None, None, None))[2]
+
+                        if not away_poly or not home_poly:
+                            print(f"  Skipping: No Polymarket mapping for {away_name} @ {home_name}")
+                            continue
+
+                        # Check if Polymarket market exists
+                        market_info = await polymarket_api.check_market_exists(
+                            session, sport="nba", date=game_date, away_team=away_poly, home_team=home_poly
+                        )
+
+                        if market_info.get("exists"):
+                            markets.append({
+                                "market_id": market_info["market_id"],
+                                "polymarket_slug": market_info["polymarket_slug"],
+                                "sport": "NBA",
+                                "game_date": game_date,
+                                "away_team": away_name,
+                                "away_team_id": str(away_id),
+                                "home_team": home_name,
+                                "home_team_id": str(home_id),
+                                "game_start_ts": market_info["game_start_ts"],
+                                "market_open_ts": market_info.get("market_open_ts"),
+                                "market_close_ts": market_info.get("market_close_ts"),
+                                "market_status": "open"
+                            })
+                            print(f"  Found: {away_poly} @ {home_poly} on {game_date}")
+
+                    except Exception as e:
+                        print(f"  Error processing NBA game {event_id}: {e}")
+                        continue
+
+        except Exception as e:
+            print(f"  Error fetching NBA scoreboard for {check_date}: {e}")
+            continue
+
+    print(f"Found {len(markets)} NBA markets")
+    return markets
+
+
 async def cleanup_old_markets():
     """
     Remove markets that have been resolved or are past their game time.
@@ -221,7 +340,7 @@ async def cleanup_old_markets():
 async def main():
     """Main entry point for market discovery."""
     print("=" * 60)
-    print("NFL Market Discovery Service")
+    print("NFL & NBA Market Discovery Service")
     print(f"Started at: {datetime.now()}")
     print("=" * 60)
 
@@ -234,10 +353,18 @@ async def main():
         # Discover NFL markets
         nfl_markets = await discover_nfl_markets(session, days_ahead=10)
 
-        if nfl_markets:
-            print(f"\nInserting {len(nfl_markets)} markets into database...")
+        # Discover NBA markets
+        nba_markets = await discover_nba_markets(session, days_ahead=10)
+
+        # Combine all markets
+        all_markets = nfl_markets + nba_markets
+
+        if all_markets:
+            print(f"\nInserting {len(all_markets)} total markets into database...")
+            print(f"  NFL: {len(nfl_markets)} markets")
+            print(f"  NBA: {len(nba_markets)} markets")
             try:
-                inserted = db.insert_active_markets(nfl_markets)
+                inserted = db.insert_active_markets(all_markets)
                 print(f"Successfully inserted {inserted} new markets")
             except Exception as e:
                 print(f"Error inserting markets: {e}")

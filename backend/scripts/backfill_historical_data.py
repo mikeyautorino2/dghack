@@ -190,7 +190,7 @@ async def main():
 
     try:
         # Run NFL backfill (async)
-        await backfill_nba()
+        await backfill_nfl()
 
     except KeyboardInterrupt:
         print("\n\n⚠️  Backfill interrupted by user")

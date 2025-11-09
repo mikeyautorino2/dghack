@@ -2,6 +2,5 @@
 venv
 testing.ipynb
 __pycache__
-tmp
+tmp/
 *.claude/
-!.claude/agents/

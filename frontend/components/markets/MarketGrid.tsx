@@ -26,22 +26,13 @@ export function MarketGrid({ games, isLoading }: MarketGridProps) {
   return (
     <div className="space-y-6">
       {/* Section header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">
-            Upcoming Markets
-          </h2>
-          <p className="text-sm text-text-tertiary mt-1">
-            {games.length} game{games.length !== 1 ? 's' : ''} with active Polymarket markets
-          </p>
-        </div>
-
-        {/* Sort dropdown */}
-        <select className="bg-bg-secondary border border-border-default rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-primary">
-          <option>Sort by date</option>
-          <option>Sort by price</option>
-          <option>Sort by sport</option>
-        </select>
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight">
+          Upcoming Markets
+        </h2>
+        <p className="text-sm text-text-tertiary mt-1">
+          {games.length} game{games.length !== 1 ? 's' : ''} with active Polymarket markets
+        </p>
       </div>
 
       {/* Grid of game cards */}

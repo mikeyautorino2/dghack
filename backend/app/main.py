@@ -9,12 +9,14 @@ Provides endpoints for:
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+import aiohttp
 from .db import SessionLocal, ActiveMarket, NFLGameFeatures, NBAGameFeatures
 from .services.knn_service import find_similar_games
 from .services.price_history_service import fetch_price_histories_batch
 from .team_mappings import get_polymarket_abbrev
+from backend.services import polymarket_api
 
-app = FastAPI(title="NFL Betting Markets API")
+app = FastAPI(title="Sports Betting Markets API")
 
 # CORS middleware for local development
 app.add_middleware(
@@ -38,31 +40,53 @@ def get_db():
 @app.get("/")
 def root():
     """Health check endpoint."""
-    return {"status": "ok", "message": "NFL Betting Markets API"}
+    return {"status": "ok", "message": "Sports Betting Markets API"}
 
 
 @app.get("/api/markets")
-def get_active_markets():
+async def get_active_markets(sport: str = "NBA"):
     """
-    Get list of active NFL betting markets.
+    Get recent historical games with Polymarket prices that can be analyzed.
 
-    Returns markets with status='open' sorted by game start time.
+    Query param: ?sport=NFL or ?sport=NBA (default: NBA)
+
+    Returns list of recent games that have:
+    - Historical team statistics (already played)
+    - Polymarket price data
+    - Can be analyzed via KNN for similar matchups
     """
     db = SessionLocal()
     try:
-        markets = db.query(ActiveMarket).filter_by(
-            sport='NFL',
-            market_status='open'
-        ).order_by(ActiveMarket.game_start_ts).all()
+        # Get the appropriate model based on sport
+        model = NBAGameFeatures if sport.upper() == 'NBA' else NFLGameFeatures
 
-        return [{
-            'market_id': m.market_id,
-            'away_team': m.away_team,
-            'home_team': m.home_team,
-            'game_date': str(m.game_date),
-            'game_start_ts': m.game_start_ts,
-            'polymarket_slug': m.polymarket_slug
-        } for m in markets]
+        # Query recent games with Polymarket data
+        # Filter for games that have price data and order by most recent
+        recent_games = db.query(model).filter(
+            model.polymarket_home_price.isnot(None),
+            model.polymarket_away_price.isnot(None)
+        ).order_by(model.game_date.desc()).limit(50).all()
+
+        if not recent_games:
+            return []
+
+        # Build results in format frontend expects
+        results = []
+        for game in recent_games:
+            results.append({
+                'game_id': game.game_id,
+                'sport': game.sport,
+                'away_team': game.away_team,
+                'home_team': game.home_team,
+                'game_date': str(game.game_date),
+                'game_start_ts': game.polymarket_start_ts if game.polymarket_start_ts else 0,
+                'polymarket_away_price': game.polymarket_away_price,
+                'polymarket_home_price': game.polymarket_home_price,
+                'polymarket_slug': ''  # Not needed for historical games
+            })
+
+        return results
+
     finally:
         db.close()
 

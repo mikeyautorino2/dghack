@@ -4,3 +4,4 @@ testing.ipynb
 __pycache__
 tmp/
 *.claude/
+node_modules

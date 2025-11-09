@@ -41,7 +41,7 @@ var __TURBOPACK__imported__module__$5b$next$5d2f$internal$2f$font$2f$google$2f$i
 ;
 ;
 const metadata = {
-    title: 'Betting Analytics',
+    title: 'degenstock',
     description: 'Sports betting market analysis powered by historical data'
 };
 function RootLayout({ children }) {

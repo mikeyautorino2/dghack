@@ -1,7 +1,5 @@
 import datetime as dt
 from datetime import datetime
-from zoneinfo import ZoneInfo
-from typing import Optional
 import asyncio
 import aiohttp
 import json
@@ -269,3 +267,131 @@ async def check_market_exists(
 
         # Both orders failed, market doesn't exist
         return {"exists": False}
+
+
+async def get_price_history(
+    session: aiohttp.ClientSession,
+    sport: str,
+    date: dt.date,
+    away_team: str,
+    home_team: str,
+    include_game_interval: bool = False
+) -> dict:
+    """
+    Get price history for a Polymarket game market.
+
+    Fetches full market price history from market_open_ts to market_close_ts.
+    Optionally includes filtered history from game_start_ts to market_close_ts.
+
+    Args:
+        session: aiohttp ClientSession for making requests
+        sport: Sport type (e.g., "NBA", "NFL", "MLB")
+        date: Game date
+        away_team: Away team name (Polymarket format)
+        home_team: Home team name (Polymarket format)
+        include_game_interval: If True, also includes game_history (from game start to close)
+
+    Returns:
+        Dict with structure:
+        {
+            "full_history": [
+                {"timestamp": int, "away_price": float, "home_price": float},
+                ...
+            ],
+            "game_history": [...],  # Only if include_game_interval=True
+            "market_open_ts": int,
+            "market_close_ts": int,
+            "game_start_ts": int
+        }
+
+        Returns empty dict {} if market doesn't exist or error occurs.
+
+    Note: Polymarket sometimes reverses team order in slugs. This function tries both orders.
+    """
+    async with _polymarket_semaphore:
+        # Try normal order first (away-home), then reversed (home-away)
+        team_orders = [
+            (away_team, home_team, False),  # Normal order
+            (home_team, away_team, True)     # Reversed order
+        ]
+
+        for first_team, second_team, is_reversed in team_orders:
+            try:
+                slug = f"{sport.lower()}-{first_team.lower()}-{second_team.lower()}-{date.strftime('%Y-%m-%d')}"
+                market_url = f"https://gamma-api.polymarket.com/markets/slug/{slug}"
+                price_history_url = "https://clob.polymarket.com/prices-history"
+
+                # Get market metadata using rate-limited request
+                data = await _rate_limited_get(session, market_url)
+
+                # Extract timestamps
+                game_start_dt = datetime.fromisoformat(data["gameStartTime"].replace("Z", "+00:00"))
+                market_open_dt = datetime.fromisoformat(data["startDate"].replace("Z", "+00:00"))
+                market_close_dt = datetime.fromisoformat(data["endDate"].replace("Z", "+00:00"))
+
+                game_start_ts = int(game_start_dt.timestamp())
+                market_open_ts = int(market_open_dt.timestamp())
+                market_close_ts = int(market_close_dt.timestamp())
+
+                # Extract clob token for price queries
+                clobIdTokens = json.loads(data["clobTokenIds"])
+                market_token = clobIdTokens[0]
+
+                # Fetch full price history (market open to close)
+                queryString = {
+                    "market": market_token,
+                    "startTs": market_open_ts,
+                    "endTs": market_close_ts
+                }
+
+                # Get price history using rate-limited request
+                history_data = await _rate_limited_get(session, price_history_url, params=queryString)
+
+                # Process full history data
+                full_history = []
+                for entry in history_data.get("history", []):
+                    price_first = entry["p"]
+                    price_second = 1.0 - price_first
+                    timestamp = entry["t"]
+
+                    # Handle price reversal if team order was reversed
+                    if is_reversed:
+                        away_price = price_second
+                        home_price = price_first
+                    else:
+                        away_price = price_first
+                        home_price = price_second
+
+                    full_history.append({
+                        "timestamp": timestamp,
+                        "away_price": away_price,
+                        "home_price": home_price
+                    })
+
+                # Build result
+                result = {
+                    "full_history": full_history,
+                    "market_open_ts": market_open_ts,
+                    "market_close_ts": market_close_ts,
+                    "game_start_ts": game_start_ts
+                }
+
+                # If requested, filter for game interval (in-memory, no extra API call)
+                if include_game_interval:
+                    game_history = [
+                        entry for entry in full_history
+                        if entry["timestamp"] >= game_start_ts
+                    ]
+                    result["game_history"] = game_history
+
+                return result
+
+            except Exception:
+                # If this order failed and we haven't tried reversed yet, continue
+                if not is_reversed:
+                    continue
+                # If both orders failed, return empty dict
+                return {}
+
+        # Should not reach here, but return empty dict as fallback
+        return {}
